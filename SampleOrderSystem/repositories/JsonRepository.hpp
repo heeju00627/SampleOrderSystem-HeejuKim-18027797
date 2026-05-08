@@ -11,19 +11,20 @@
 template<typename T>
 class JsonRepository : public IRepository<T> {
 public:
+    // setId: 엔티티에 ID를 부여하는 람다. 직접 생성·설정까지 책임짐 (Sample은 no-op, Order는 sequence 생성)
+    using SetIdFn   = std::function<void(T&)>;
     using GetIdFn   = std::function<std::string(const T&)>;
-    using SetIdFn   = std::function<void(T&, const std::string&)>;
     using ToJsonFn  = std::function<json::Value(const T&)>;
     using FromJsonFn= std::function<T(const json::Value&)>;
 
     JsonRepository(std::string filePath,
-                   GetIdFn    getId,
                    SetIdFn    setId,
+                   GetIdFn    getId,
                    ToJsonFn   toJson,
                    FromJsonFn fromJson)
         : filePath_(std::move(filePath))
-        , getId_(std::move(getId))
         , setId_(std::move(setId))
+        , getId_(std::move(getId))
         , toJson_(std::move(toJson))
         , fromJson_(std::move(fromJson))
     {
@@ -49,6 +50,7 @@ public:
     }
 
     void add(T& entity) override {
+        setId_(entity);          // no-op(Sample) 또는 orderId 생성(Order)
         auto list = getAll();
         list.push_back(entity);
         persist(list);
@@ -78,8 +80,8 @@ public:
 
 private:
     std::string filePath_;
-    GetIdFn     getId_;
     SetIdFn     setId_;
+    GetIdFn     getId_;
     ToJsonFn    toJson_;
     FromJsonFn  fromJson_;
 
