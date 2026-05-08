@@ -25,8 +25,8 @@
 
 | 파일 | 위치 | 설명 |
 |------|------|------|
-| `SampleService.hpp/.cpp` | `services/` | 시료 CRUD + 유효성 검사 |
-| `OrderService.hpp/.cpp` | `services/` | 주문 접수·승인·거절·조회 |
+| `SampleService.hpp` | `services/` | 시료 CRUD + 유효성 검사 (헤더 전용) |
+| `OrderService.hpp` | `services/` | 주문 접수·승인·거절·조회 (헤더 전용) |
 | `ProductionCalculator.hpp` | `services/` | 실생산 수량·총 생산 시간 계산 (순수 함수) |
 
 ---

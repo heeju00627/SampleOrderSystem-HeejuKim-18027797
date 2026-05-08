@@ -170,18 +170,18 @@ TEST_F(OrderServiceTest, ApproveWithSufficientStockSetsConfirmed) {
     Order o = reservedOrder();
     Sample s = baseSample(100);
 
+    Order capturedOrder;
     EXPECT_CALL(*orderRepo, getById("ORD-20260508-0001"))
         .WillOnce(::testing::Return(std::optional<Order>{o}));
     EXPECT_CALL(*sampleRepo, getById("S0001"))
         .WillOnce(::testing::Return(std::optional<Sample>{s}));
     EXPECT_CALL(*sampleRepo, update(::testing::_)).Times(1);
-    EXPECT_CALL(*orderRepo, update(::testing::_)).Times(1);
+    EXPECT_CALL(*orderRepo, update(::testing::_))
+        .WillOnce(::testing::SaveArg<0>(&capturedOrder));
 
     svc.approve("ORD-20260508-0001");
 
-    // update에 넘긴 Order의 status가 "confirmed"인지 검증
-    EXPECT_CALL(*orderRepo, update(::testing::Field(&Order::status, "confirmed")))
-        .Times(::testing::AnyNumber());
+    EXPECT_EQ(capturedOrder.status, "confirmed");
 }
 
 TEST_F(OrderServiceTest, ApproveWithInsufficientStockSetsProducing) {
