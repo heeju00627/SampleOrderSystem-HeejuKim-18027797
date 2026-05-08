@@ -441,7 +441,15 @@ Value Value::parseFile(const std::string& path) {
     if (!ifs) throw Exception("Cannot open file: " + path);
     std::ostringstream oss; oss << ifs.rdbuf();
     if (ifs.fail() && !ifs.eof()) throw Exception("Failed to read file: " + path);
-    return parse(oss.str());
+    std::string content = oss.str();
+    // UTF-8 BOM 제거 (PowerShell 등에서 생성된 파일 대응)
+    if (content.size() >= 3 &&
+        static_cast<unsigned char>(content[0]) == 0xEF &&
+        static_cast<unsigned char>(content[1]) == 0xBB &&
+        static_cast<unsigned char>(content[2]) == 0xBF) {
+        content = content.substr(3);
+    }
+    return parse(content);
 }
 
 } // namespace json
