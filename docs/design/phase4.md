@@ -111,7 +111,7 @@ applyLazyUpdates():
 | # | 시나리오 | 예상 결과 |
 |---|----------|-----------|
 | 1 | producing 주문의 estimatedCompletionAt이 미래 → applyLazyUpdates | 상태 변화 없음 |
-| 2 | MockClock을 completionAt 이후로 설정 → applyLazyUpdates | status = confirmed, 재고 증가 |
+| 2 | MockClock을 completionAt 이후로 설정 → applyLazyUpdates | status = confirmed, stockQty 변경 없음 |
 | 3 | producing 주문 2개 (A→B 순), A 완료 시각 이후로 설정 → applyLazyUpdates | A=confirmed, B의 productionStartedAt 설정됨 |
 | 4 | producing 2개 모두 완료 시간 경과 → applyLazyUpdates | A=confirmed, B=confirmed, 순서대로 처리 |
 | 5 | 대기 중 주문의 시작 시각이 앞 주문 완료 시각 이후인지 확인 | B.productionStartedAt >= A.estimatedCompletionAt |

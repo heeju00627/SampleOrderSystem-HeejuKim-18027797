@@ -49,6 +49,7 @@ public:
             } else if (!active) {
                 // 생산 중인 주문이 없을 때도 대기 중인 주문이 있으면 시작
                 startNextInQueue(all, clock_->now());
+                anyCompleted = true; // 다음 이터레이션에서 새 activeOrder 완료 여부 재확인
             }
         }
     }
@@ -79,7 +80,7 @@ public:
         auto opt = orderRepo_->getById(orderId);
         if (!opt || opt->estimatedCompletionAt.empty()) return 0.0;
 
-        auto endTp = parseIso8601(opt->estimatedCompletionAt);
+        auto endTp = TimeUtils::parseIso8601(opt->estimatedCompletionAt);
         auto nowTp = clock_->now();
         if (endTp <= nowTp) return 0.0;
 
@@ -93,32 +94,8 @@ private:
     std::shared_ptr<IRepository<Order>>  orderRepo_;
     std::shared_ptr<IRepository<Sample>> sampleRepo_;
 
-    // ISO 8601 문자열 → time_point
-    static std::chrono::system_clock::time_point parseIso8601(const std::string& s) {
-        std::tm tm{};
-        int y, mo, d, h, mi, sec;
-#ifdef _WIN32
-        const int parsed = sscanf_s(s.c_str(), "%d-%d-%dT%d:%d:%d",
-                                    &y, &mo, &d, &h, &mi, &sec);
-#else
-        const int parsed = std::sscanf(s.c_str(), "%d-%d-%dT%d:%d:%d",
-                                       &y, &mo, &d, &h, &mi, &sec);
-#endif
-        if (parsed == 6) {
-            tm.tm_year = y - 1900; tm.tm_mon = mo - 1; tm.tm_mday = d;
-            tm.tm_hour = h; tm.tm_min = mi; tm.tm_sec = sec;
-            tm.tm_isdst = -1;
-#ifdef _WIN32
-            return std::chrono::system_clock::from_time_t(_mkgmtime(&tm));
-#else
-            return std::chrono::system_clock::from_time_t(timegm(&tm));
-#endif
-        }
-        return std::chrono::system_clock::time_point{};
-    }
-
-    std::chrono::system_clock::time_point completionAt(const Order& o) const {
-        return parseIso8601(o.estimatedCompletionAt);
+std::chrono::system_clock::time_point completionAt(const Order& o) const {
+        return TimeUtils::parseIso8601(o.estimatedCompletionAt);
     }
 
     // 대기 목록에서 다음 주문을 꺼내 생산 시작 처리
