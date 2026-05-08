@@ -27,7 +27,7 @@
 | `IClock.h` | `clock/` | 현재 시각 조회 인터페이스 |
 | `SystemClock.h` | `clock/` | `std::chrono::system_clock` 구현체 |
 | `MockClock.h` | `clock/` | 테스트용 시각 조작 구현체 |
-| `ProductionService.hpp/.cpp` | `services/` | Lazy 갱신, FIFO 큐 관리 |
+| `ProductionService.hpp` | `services/` | Lazy 갱신, FIFO 큐 관리 (헤더 전용) |
 
 ---
 
@@ -60,25 +60,27 @@ MockClock : IClock
 
 ```
 applyLazyUpdates():
-  1. 'producing' 상태이고 productionStartedAt이 설정된 주문 목록 조회
-     → activeOrder (대기열 앞, 실제 생산 중인 주문)
+  1. 'producing' 상태이고 productionStartedAt이 설정된 주문 조회
+     → activeOrder (실제 생산 중인 주문, 최대 1개 — 불변 조건 참조)
 
-  2. activeOrder.estimatedCompletionAt <= now() 이면:
-       a. activeOrder.status = confirmed
-       b. 해당 시료 stockQty += productionQty  (생산된 수량 재고 추가)
-       c. 주문 저장
+  2. activeOrder가 존재하고 estimatedCompletionAt <= now() 이면:
+       a. activeOrder.status = confirmed   (생산 완료, 출고 대기)
+       b. 주문 저장
+       ※ 재고(stockQty)는 approve 시 이미 선점(0으로 설정)했으므로 이 시점에 변경하지 않음
 
-  3. 남은 'producing' 주문 중 productionStartedAt이 비어 있는 것을 queuedAt 순 정렬
+  3. 남은 'producing' 주문 중 productionStartedAt이 비어 있는 것을 queuedAt 오름차순 정렬
      → 대기 중인 주문 목록
 
-  4. 비어 있는 생산 슬롯(activeOrder가 없거나 방금 완료됨)에 대해:
+  4. 생산 슬롯이 비어 있으면(activeOrder가 없거나 2단계에서 방금 완료됨):
        a. 대기 목록의 첫 번째 주문을 꺼냄
        b. productionStartedAt = max(now(), 직전 완료 시각)
-            ※ 여러 주문이 연쇄 완료될 때 시각이 역행하지 않도록
+            ※ 연쇄 완료 시 시각이 역행하지 않도록
        c. estimatedCompletionAt = productionStartedAt + totalProductionMinutes
-       d. 주문 저장
+       d. 주문 저장 → 이 주문이 새로운 activeOrder가 됨
 
-  5. 2~4를 더 이상 완료할 주문이 없을 때까지 반복
+  5. 2단계로 돌아가 새 activeOrder의 완료 여부를 다시 확인한다.
+     더 이상 완료 처리가 발생하지 않을 때까지 반복한다.
+     (오래 꺼져 있다가 재시작한 경우 여러 주문이 연속 완료될 수 있음)
 ```
 
 > `producing` 상태이지만 `productionStartedAt`이 비어 있는 주문 = 대기열 대기 중  
@@ -134,5 +136,8 @@ SystemClock        →  IClock
 
 ## 주의사항
 
-- `applyLazyUpdates()`는 메뉴 진입마다 호출되므로 멱등(idempotent)해야 한다. 같은 시각에 두 번 호출해도 결과가 달라지지 않아야 한다.
+- **불변 조건**: `productionStartedAt`이 설정된 `producing` 주문은 동시에 최대 1개다. 이 조건이 깨진 경우(데이터 이상 등) 알고리즘의 동작은 정의되지 않는다.
+- **재고 변경 없음**: 생산 완료(`producing → confirmed`) 시 `stockQty`를 변경하지 않는다. 재고는 `approve` 시점에 선점(0으로 설정)됐으므로 생산 완료는 단순히 출고 대기 상태로의 전이만 의미한다.
+- **멱등성**: `applyLazyUpdates()`는 메뉴 진입마다 호출되므로 같은 시각에 두 번 호출해도 결과가 달라지지 않아야 한다.
 - 타임스탬프 파싱/포매팅은 이 Phase에서 공용 유틸리티 함수로 분리한다.
+- `ProductionService`는 Phase 3과 마찬가지로 헤더 전용(`.hpp`)으로 구현한다.
