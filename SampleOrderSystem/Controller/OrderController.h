@@ -129,13 +129,16 @@ private:
         std::string kw = ConsoleUI::getStringInput("  키워드 > ");
         auto samples = sampleSvc_->search(kw);
         ConsoleUI::printSubHeader("검색 결과: " + kw);
-        std::vector<std::string> headers = { "시료ID", "이름", "min/ea", "수율", "재고" };
+        std::vector<std::string> headers = { "시료ID", "이름", "min/ea", "수율", "재고", "상태" };
         std::vector<std::vector<std::string>> rows;
-        for (const auto& s : samples)
+        for (const auto& s : samples) {
+            int demand = calcReservedDemand(s.sampleId);
+            auto sv = StockStatus::evaluate(s.stockQty, demand);
             rows.push_back({ s.sampleId, s.name,
                 formatDouble(s.avgProductionTime), formatDouble(s.yield),
-                std::to_string(s.stockQty) });
-        ConsoleUI::printTable(headers, rows, { 8, 20, 8, 6, 6 });
+                std::to_string(s.stockQty), StockStatus::toString(sv) });
+        }
+        ConsoleUI::printTable(headers, rows, { 8, 20, 8, 6, 6, 6 });
     }
 
     void registerSample() {
@@ -159,7 +162,12 @@ private:
         ConsoleUI::printSubHeader("시료 주문");
         showSampleList();
         std::cout << '\n';
-        std::string sampleId   = ConsoleUI::getStringInput("  시료ID  > ");
+        std::string sampleId = ConsoleUI::getStringInput("  시료ID (0=취소) > ");
+        if (sampleId.empty() || sampleId == "0") {
+            ConsoleUI::printInfo("취소됐습니다.");
+            ConsoleUI::pressEnterToContinue();
+            return;
+        }
         std::string customerName = ConsoleUI::getStringInput("  고객명  > ");
         int qty = ConsoleUI::getIntInput("  주문수량 > ");
         try {
@@ -177,23 +185,67 @@ private:
         auto reserved = orderSvc_->findByStatus("reserved");
         if (reserved.empty()) { ConsoleUI::printEmpty(); ConsoleUI::pressEnterToContinue(); return; }
 
-        std::vector<std::string> headers = { "주문ID", "시료ID", "고객명", "수량" };
+        std::vector<std::string> headers = { "번호", "주문ID", "시료ID", "고객명", "수량", "접수일시" };
         std::vector<std::vector<std::string>> rows;
-        for (const auto& o : reserved)
-            rows.push_back({ o.orderId, o.sampleId, o.customerName, std::to_string(o.orderQty) });
-        ConsoleUI::printTable(headers, rows, 20);
+        for (size_t i = 0; i < reserved.size(); ++i)
+            rows.push_back({ std::to_string(i + 1), reserved[i].orderId,
+                             reserved[i].sampleId, reserved[i].customerName,
+                             std::to_string(reserved[i].orderQty), reserved[i].createdAt });
+        ConsoleUI::printTable(headers, rows, { 5, 20, 8, 12, 6, 20 });
         std::cout << '\n';
 
-        std::string orderId = ConsoleUI::getStringInput("  주문ID > ");
-        if (orderId.empty()) { ConsoleUI::pressEnterToContinue(); return; }
+        int sel = ConsoleUI::getIntInput("  번호 선택 (0=취소) > ");
+        if (sel <= 0 || sel > static_cast<int>(reserved.size())) {
+            ConsoleUI::pressEnterToContinue(); return;
+        }
+        const Order& selOrder = reserved[sel - 1];
+        std::string orderId = selOrder.orderId;
 
-        bool approve = ConsoleUI::getYNInput("  [Y] 승인 / [N] 거절");
+        // 선택된 시료의 재고 현황 안내
+        auto sampleOpt = sampleSvc_->findById(selOrder.sampleId);
+        if (sampleOpt) {
+            int demand = calcReservedDemand(selOrder.sampleId);
+            auto sv = StockStatus::evaluate(sampleOpt->stockQty, demand);
+            ConsoleUI::Color sc = StockStatus::Value::Depleted == sv ? ConsoleUI::Color::Red
+                                : StockStatus::Value::Short    == sv ? ConsoleUI::Color::Yellow
+                                                                     : ConsoleUI::Color::Green;
+            std::cout << "\n  [재고 현황] ";
+            ConsoleUI::printColored(sampleOpt->name, ConsoleUI::Color::Cyan);
+            std::cout << "  현재재고: ";
+            ConsoleUI::printColored(std::to_string(sampleOpt->stockQty) + "개", sc);
+            std::cout << "  /  주문수량: " << selOrder.orderQty << "개";
+            if (sampleOpt->stockQty >= selOrder.orderQty)
+                ConsoleUI::printColored("  → 재고 충분 (즉시 confirmed)\n", ConsoleUI::Color::Green);
+            else
+                ConsoleUI::printColored("  → 재고 부족 (생산 필요, producing)\n", ConsoleUI::Color::Yellow);
+            std::cout << '\n';
+        }
+
+        auto choice = ConsoleUI::getYNOrCancelInput("  [Y] 승인 / [N] 거절");
+        if (!choice.has_value()) {
+            ConsoleUI::printInfo("취소됐습니다.");
+            ConsoleUI::pressEnterToContinue();
+            return;
+        }
+        bool approve = choice.value();
         if (approve) {
             try {
+                // 승인 전 재고 캡처
+                auto orderOpt = orderSvc_->findById(orderId);
+                int stockBefore = 0;
+                if (orderOpt) {
+                    auto s = sampleSvc_->findById(orderOpt->sampleId);
+                    if (s) stockBefore = s->stockQty;
+                }
                 orderSvc_->approve(orderId);
+                prodSvc_->applyLazyUpdates(); // producing 전환 즉시 큐 처리 → startedAt/completionAt 설정
                 auto opt = orderSvc_->findById(orderId);
                 if (opt && opt->status == "confirmed") {
+                    auto s = sampleSvc_->findById(opt->sampleId);
+                    int stockAfter = s ? s->stockQty : 0;
                     ConsoleUI::printSuccess("승인 완료 — 출고 대기 (confirmed)");
+                    ConsoleUI::printInfo("  재고: " + std::to_string(stockBefore)
+                        + "개 → " + std::to_string(stockAfter) + "개");
                 } else if (opt && opt->status == "producing") {
                     ConsoleUI::printSuccess("승인 완료 — 생산 등록 (producing)");
                     ConsoleUI::printInfo("  실생산량: " + std::to_string(opt->productionQty) + "개"
@@ -219,31 +271,52 @@ private:
 
     // ── 4. 모니터링 ─────────────────────────────────────────
     void handleMonitor() {
-        ConsoleUI::printSubHeader("모니터링");
-        ConsoleUI::printMenuItem(1, "주문 상태별 목록");
-        ConsoleUI::printMenuItem(2, "시료별 재고 현황");
-        ConsoleUI::printMenuItem(0, "돌아가기", true);
-        std::cout << '\n';
+        while (true) {
+            ConsoleUI::printSubHeader("모니터링");
+            ConsoleUI::printMenuItem(1, "주문 상태별 목록");
+            ConsoleUI::printMenuItem(2, "시료별 재고 현황");
+            ConsoleUI::printMenuItem(0, "돌아가기", true);
+            std::cout << '\n';
 
-        int choice = ConsoleUI::getIntInput("  선택 > ");
-        if (choice == 0) return;
-        if (choice == 1) showOrdersByStatus();
-        else if (choice == 2) showInventory();
-        else { ConsoleUI::printError("잘못된 메뉴 번호입니다."); }
-        ConsoleUI::pressEnterToContinue();
+            int choice = ConsoleUI::getIntInput("  선택 > ");
+            if (choice == 0) break;
+            prodSvc_->applyLazyUpdates();
+            if (choice == 1) showOrdersByStatus();
+            else if (choice == 2) showInventory();
+            else { ConsoleUI::printError("잘못된 메뉴 번호입니다."); }
+            ConsoleUI::pressEnterToContinue();
+        }
     }
 
     void showOrdersByStatus() {
-        const std::vector<std::string> statuses = { "reserved", "confirmed", "producing", "released" };
-        const std::vector<std::string> headers = { "주문ID", "시료ID", "고객명", "수량", "상태" };
-        for (const auto& st : statuses) {
+        // reserved / confirmed: 주문ID | 시료ID | 고객명 | 주문량
+        const std::vector<std::string> basicHdr = { "주문ID", "시료ID", "고객명", "주문량" };
+        for (const auto& st : { "reserved", "confirmed", "released" }) {
             auto orders = orderSvc_->findByStatus(st);
-            ConsoleUI::printSubHeader(st + " (" + std::to_string(orders.size()) + "건)");
+            ConsoleUI::printSubHeader(std::string(st) + " (" + std::to_string(orders.size()) + "건)");
             std::vector<std::vector<std::string>> rows;
             for (const auto& o : orders)
                 rows.push_back({ o.orderId, o.sampleId, o.customerName,
-                                 std::to_string(o.orderQty), o.status });
-            ConsoleUI::printTable(headers, rows, 20);
+                                 std::to_string(o.orderQty) });
+            ConsoleUI::printTable(basicHdr, rows, { 20, 8, 12, 8 });
+        }
+
+        // producing: 주문ID | 시료ID | 고객명 | 주문량 | 부족분 | 실생산량 | 예상완료
+        {
+            auto orders = orderSvc_->findByStatus("producing");
+            ConsoleUI::printSubHeader("producing (" + std::to_string(orders.size()) + "건)");
+            const std::vector<std::string> prodHdr =
+                { "주문ID", "시료ID", "고객명", "주문량", "실생산량", "예상완료" };
+            std::vector<std::vector<std::string>> rows;
+            for (const auto& o : orders) {
+                rows.push_back({
+                    o.orderId, o.sampleId, o.customerName,
+                    std::to_string(o.orderQty),
+                    std::to_string(o.productionQty),
+                    o.estimatedCompletionAt.empty() ? "(대기중)" : o.estimatedCompletionAt
+                });
+            }
+            ConsoleUI::printTable(prodHdr, rows, { 20, 8, 12, 8, 8, 22 });
         }
     }
 
@@ -251,7 +324,7 @@ private:
         ConsoleUI::printSubHeader("시료별 재고 현황");
         ConsoleUI::printInfo("※ 수요: 승인 대기 중(reserved) 주문 합계  |  재고는 승인 시 자동 차감됨");
         auto samples = sampleSvc_->findAll();
-        std::vector<std::string> headers = { "시료ID", "이름", "재고", "예약수요", "잔여율", "상태" };
+        std::vector<std::string> headers = { "시료ID", "이름", "재고", "예약수요", "충족률", "상태" };
         std::vector<std::vector<std::string>> rows;
         for (const auto& s : samples) {
             int demand = calcReservedDemand(s.sampleId);
@@ -262,7 +335,7 @@ private:
             else if (demand == 0)
                 ratio = "-";
             else
-                ratio = std::to_string(s.stockQty * 100 / demand) + "%";
+                ratio = std::to_string(s.stockQty * 100 / demand) + "%"; // 재고/예약수요
             rows.push_back({ s.sampleId, s.name,
                              std::to_string(s.stockQty),
                              demand > 0 ? std::to_string(demand) : "-",
@@ -282,10 +355,15 @@ private:
         } else {
             double rem = prodSvc_->getRemainingMinutes(active->orderId);
             std::string remStr = formatRemainingTime(rem);
-            std::vector<std::string> hdr = { "주문ID", "시료", "고객", "수량", "시작시각", "예상완료", "잔여" };
+            ConsoleUI::Color remColor = (rem <= 0)  ? ConsoleUI::Color::Red
+                                      : (rem <= 60) ? ConsoleUI::Color::Yellow
+                                                    : ConsoleUI::Color::Green;
+            std::vector<std::string> hdr = { "주문ID", "시료", "고객", "수량", "시작시각", "예상완료" };
             ConsoleUI::printTable(hdr, {{ active->orderId, active->sampleId,
                 active->customerName, std::to_string(active->orderQty),
-                active->productionStartedAt, active->estimatedCompletionAt, remStr }}, 20);
+                active->productionStartedAt, active->estimatedCompletionAt }}, 20);
+            std::cout << "  잔여시간: ";
+            ConsoleUI::printColored(remStr + "\n", remColor);
         }
 
         ConsoleUI::printSubHeader("생산 대기 중 (FIFO)");
@@ -310,15 +388,20 @@ private:
         auto confirmed = orderSvc_->findByStatus("confirmed");
         if (confirmed.empty()) { ConsoleUI::printEmpty(); ConsoleUI::pressEnterToContinue(); return; }
 
-        std::vector<std::string> headers = { "주문ID", "시료ID", "고객명", "수량" };
+        std::vector<std::string> headers = { "번호", "주문ID", "시료ID", "고객명", "수량" };
         std::vector<std::vector<std::string>> rows;
-        for (const auto& o : confirmed)
-            rows.push_back({ o.orderId, o.sampleId, o.customerName, std::to_string(o.orderQty) });
-        ConsoleUI::printTable(headers, rows, 20);
+        for (size_t i = 0; i < confirmed.size(); ++i)
+            rows.push_back({ std::to_string(i + 1), confirmed[i].orderId,
+                             confirmed[i].sampleId, confirmed[i].customerName,
+                             std::to_string(confirmed[i].orderQty) });
+        ConsoleUI::printTable(headers, rows, { 5, 20, 8, 12, 6 });
         std::cout << '\n';
 
-        std::string orderId = ConsoleUI::getStringInput("  주문ID > ");
-        if (orderId.empty()) { ConsoleUI::pressEnterToContinue(); return; }
+        int sel = ConsoleUI::getIntInput("  번호 선택 (0=취소) > ");
+        if (sel <= 0 || sel > static_cast<int>(confirmed.size())) {
+            ConsoleUI::pressEnterToContinue(); return;
+        }
+        std::string orderId = confirmed[sel - 1].orderId;
 
         if (ConsoleUI::getYNInput("  출고 처리하시겠습니까?")) {
             try {

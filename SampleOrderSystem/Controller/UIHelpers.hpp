@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <cmath>
 
 // ── 재고 상태 판단 (순수 함수, OS 의존 없음) ──────────────────
 struct StockStatus {
@@ -22,7 +23,7 @@ struct StockStatus {
 
 // ── 잔여 시간 포맷 (순수 함수) ─────────────────────────────────
 inline std::string formatRemainingTime(double minutes) {
-    int totalMin = static_cast<int>(minutes);
+    int totalMin = static_cast<int>(std::ceil(minutes)); // 분 단위 올림
     if (totalMin <= 0) return "0m";
     int h = totalMin / 60;
     int m = totalMin % 60;

@@ -60,10 +60,28 @@ OpenCppCoverage.exe --sources C:*.cpp --export_type=html:coverage -- .\x64\Debug
 
 재고 관리 원칙: approve() 시점에 stockQty를 즉시 차감(재고 충분 시 -= orderQty, 부족 시 = 0). 따라서 재고 현황 모니터링의 예약수요는 reserved(미승인) 주문만 집계하며, confirmed/producing은 이미 차감됐으므로 제외한다.
 
-핵심 Controller/View 파일:
-- `Controller/OrderController.h`: 6개 메뉴 핸들러, 메인 루프 (헤더 전용)
-- `Controller/UIHelpers.hpp`: StockStatus, formatRemainingTime 순수 함수
-- `View/ConsoleUI.h`: 색상·테이블·입력 헬퍼 (displayWidth 보정 포함)
+핵심 파일 구조:
+```
+Controller/
+  OrderController.h   — 6개 메뉴 핸들러, 메인 루프 (헤더 전용)
+  UIHelpers.hpp       — StockStatus, formatRemainingTime 순수 함수
+Model/
+  Sample.hpp / Order.hpp
+repositories/
+  IRepository.hpp / JsonRepository.hpp
+  SampleRepository.hpp / OrderRepository.hpp
+services/
+  SampleService.hpp / OrderService.hpp
+  ProductionService.hpp / ProductionCalculator.hpp
+clock/
+  IClock.h / SystemClock.h / MockClock.h
+View/
+  ConsoleUI.h         — 색상·테이블·입력 헬퍼 (displayWidth 보정 포함)
+  ConsoleView.h/.cpp  — IView 구현체
+extern/JsonLib/       — JSON 파싱·직렬화 라이브러리
+data/                 — 초기 시드 데이터 (버전 관리 포함)
+  samples.json / orders.json / order_seq.json
+```
 
 ## 주요 기능
 1. 시료 관리: 각 시료는 고유한 이름과 속성을 가지며, 시스템에 등록된 시료만 주문 가능.
@@ -99,7 +117,7 @@ OpenCppCoverage.exe --sources C:*.cpp --export_type=html:coverage -- .\x64\Debug
 
 | Agent | 호출 시점 | 역할 요약 |
 |-------|-----------|-----------|
-| **doc-consistency** | 모든 Phase ② 설계 검토, ④ 코드 검토 | plan.md·설계 문서·코드 간 불일치 탐지. 코드를 직접 수정하지 않고 보고만 한다. |
+| **doc-consistency** | 모든 Phase ② 설계 검토, ⑤ 코드 검토 | plan.md·설계 문서·코드 간 불일치 탐지. 코드를 직접 수정하지 않고 보고만 한다. |
 | **test** | Phase 2~5 ③ 구현 | Google Mock/GTest 기반 TDD. 반드시 테스트 실패를 확인한 뒤 구현한다. |
 | **system-design** | Phase 5 ②③, 출력 형식 추가 시 | 콘솔 출력 가독성·메뉴 흐름·색상 코딩 설계 및 검토. 코드를 직접 수정하지 않는다. |
 

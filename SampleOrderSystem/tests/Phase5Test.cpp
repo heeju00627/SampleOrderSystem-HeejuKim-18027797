@@ -49,3 +49,18 @@ TEST_F(FormatRemainingTimeTest, UnderOneHour) {
 TEST_F(FormatRemainingTimeTest, Zero) {
     EXPECT_EQ(formatRemainingTime(0.0), "0m");
 }
+
+TEST_F(FormatRemainingTimeTest, FractionalCeilingUnderHour) {
+    // 30.1분 → ceil → 31m
+    EXPECT_EQ(formatRemainingTime(30.1), "31m");
+}
+
+TEST_F(FormatRemainingTimeTest, FractionalCeilingOverHour) {
+    // 60.5분 → ceil → 61분 → 1h 1m
+    EXPECT_EQ(formatRemainingTime(60.5), "1h 1m");
+}
+
+TEST_F(FormatRemainingTimeTest, ExactIntegerUnchanged) {
+    // 정수 분은 변동 없음
+    EXPECT_EQ(formatRemainingTime(45.0), "45m");
+}

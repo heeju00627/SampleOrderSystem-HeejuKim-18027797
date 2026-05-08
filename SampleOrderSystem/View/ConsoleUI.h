@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <optional>
 #include <iostream>
 #include <iomanip>
 #include <limits>
@@ -118,6 +119,17 @@ inline bool getYNInput(const std::string& prompt) {
         if (ans == "Y" || ans == "y") return true;
         if (ans == "N" || ans == "n") return false;
         printError("Y 또는 N을 입력해주세요.");
+    }
+}
+
+// 승인(Y) / 거절(N) / 취소(0) 3-way 입력. 취소 시 nullopt 반환.
+inline std::optional<bool> getYNOrCancelInput(const std::string& prompt) {
+    while (true) {
+        std::string ans = getStringInput(prompt + " [Y/N/0=취소]: ");
+        if (ans == "Y" || ans == "y") return true;
+        if (ans == "N" || ans == "n") return false;
+        if (ans == "0" || ans == "q" || ans == "Q") return std::nullopt;
+        printError("Y, N, 또는 0(취소)을 입력해주세요.");
     }
 }
 
