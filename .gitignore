@@ -1,0 +1,23 @@
+# Visual Studio
+.vs/
+*.user
+x64/
+Debug/
+Release/
+*.VC.db
+*.VC.opendb
+
+# Build output
+*.exe
+*.obj
+*.pdb
+*.ilk
+*.idb
+
+# NuGet packages (단, packages.config는 포함)
+packages/**/
+!packages/.gitignore
+
+# Memory & local config
+.claude/
+.mcp.json
