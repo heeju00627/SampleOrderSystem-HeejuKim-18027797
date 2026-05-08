@@ -139,6 +139,7 @@
     <ClCompile Include="View\ConsoleView.cpp" />
     <ClCompile Include="extern\JsonLib\src\json.cpp" />
     <ClCompile Include="tests\Phase2Test.cpp" />
+    <ClCompile Include="tests\Phase3Test.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Controller\IController.h" />
@@ -152,6 +153,9 @@
     <ClInclude Include="Model\Sample.hpp" />
     <ClInclude Include="Model\Order.hpp" />
     <ClInclude Include="Utils\TimeUtils.hpp" />
+    <ClInclude Include="services\ProductionCalculator.hpp" />
+    <ClInclude Include="services\SampleService.hpp" />
+    <ClInclude Include="services\OrderService.hpp" />
     <ClInclude Include="extern\JsonLib\include\JsonLib\json.hpp" />
   </ItemGroup>
   <ItemGroup>
