@@ -16,7 +16,7 @@
 - 시료 등록·조회·검색에 유효성 검사가 적용된다.
 - 주문 접수 시 존재하지 않는 시료를 참조하면 거부된다.
 - 주문 승인 시 재고를 확인해 `confirmed` 또는 `producing`으로 전이되고, 실생산 수량과 총 생산 시간이 계산된다.
-- 잘못된 상태 전이(예: `release` 상태 주문을 다시 승인)는 예외로 차단된다.
+- 잘못된 상태 전이(예: `released` 상태 주문을 다시 승인)는 예외로 차단된다.
 
 ---
 
@@ -65,7 +65,7 @@
 | `reject(orderId)` | 거절 → `rejected` |
 | `findByStatus(status)` | 상태별 주문 조회 |
 | `findById(orderId)` | ID로 단일 주문 조회 |
-| `release(orderId)` | 출고 처리 → `release` |
+| `release(orderId)` | 출고 처리 → `released` |
 
 ### 승인 처리 세부 흐름
 
@@ -90,9 +90,9 @@ approve(orderId):
 | 현재 상태 | 가능한 전이 | 불가능한 전이 |
 |-----------|------------|--------------|
 | `reserved` | → `confirmed`, `producing`, `rejected` | 그 외 전이 |
-| `confirmed` | → `release` | 그 외 전이 |
-| `producing` | → `confirmed` (Phase 4 lazy 처리) | 직접 `release`, `reserved` 등 |
-| `release` | 없음 (최종) | 모든 전이 |
+| `confirmed` | → `released` | 그 외 전이 |
+| `producing` | → `confirmed` (Phase 4 lazy 처리) | 직접 `released`, `reserved` 등 |
+| `released` | 없음 (최종) | 모든 전이 |
 | `rejected` | 없음 (최종) | 모든 전이 |
 
 ---
@@ -143,7 +143,7 @@ calcTotalMinutes(productionQty, avgProductionTime):
 | 3 | 재고 부족한 주문 승인 | status=producing, productionQty 계산됨 |
 | 4 | confirmed 주문 다시 approve | 예외 발생 (잘못된 전이) |
 | 5 | rejected 주문 approve | 예외 발생 |
-| 6 | confirmed 주문 release | status=release |
+| 6 | confirmed 주문 release | status=released |
 | 7 | producing 주문 release (직접) | 예외 발생 |
 
 ---

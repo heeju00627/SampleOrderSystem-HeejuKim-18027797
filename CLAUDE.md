@@ -53,7 +53,7 @@ OpenCppCoverage.exe --sources C:*.cpp --export_type=html:coverage -- .\x64\Debug
 
 핵심 도메인:
 - **Sample(시료)**: 반도체 시료 정보 및 상태. 시료ID,이름, 평균생산시간, 수율을 속성값으로 가짐.
-- **Order(주문)**: 시료ID, 고객명, 주문수량을 입력으로 받게 되어 있음. 주문번호(특정 포맷으로 자동 할당), 주문상태를 속성값으로 가지며, reserved, confirmed, producing, release, rejected가 가능. 주문 시점에서의 상태는 reserved. 
+- **Order(주문)**: 시료ID, 고객명, 주문수량을 입력으로 받게 되어 있음. 주문번호(특정 포맷으로 자동 할당), 주문상태를 속성값으로 가지며, reserved, confirmed, producing, released, rejected가 가능. 주문 시점에서의 상태는 reserved. 
 - **ProductionLine(생산라인)**: 대기열은 FIFO로 관리. 주문량에 대한 부족분을 생산하되, 수율 및 오차를 고려하여 주문 당 실생산량은 ceil(부족분/(수율*0.9)), 총생산시간은 (시료 평균생산시간*실생산량)으로 관리. 
 
 동작 원칙: 주문 시간을 기록해놓고, 총생산시간에 따른 예상 완료 시간 역시 기록해놓았다가, 프로그램이 껐따 켜지거나 특정 메뉴 동작하는 시점에 현재 시간에 맞게 분단위로 lazy하게 시료 상태 업데이트.
@@ -73,18 +73,18 @@ OpenCppCoverage.exe --sources C:*.cpp --export_type=html:coverage -- .\x64\Debug
     2) 승인: 재고가 충분한 경우 즉시 주문을 confirmed 상태로 전환. 재고가 부족한 경우 생산 라인에 자동으로 등록하고 주문 상태를 producing으로 전환.
     3) 거절: 즉시 rejected 상태로 전환.
 4. 모니터링
-    1) 주문량 확인: 주문 상태별(reserved/confirmed/producing/release) 목록 display. rejected는 유효한 주문이 아니므로 무시.
+    1) 주문량 확인: 주문 상태별(reserved/confirmed/producing/released) 목록 display. rejected는 유효한 주문이 아니므로 무시.
     2) 재고량 확인: 각 시료별 현재 재고 수량 display. 주문 대비 재고 충분하면 여유, 주문 대비 재고 수량 부족하면 부족, 수량이 0이면 고갈로 표시.
 5. 생산 라인 조회
     1) 생산 현황 표기: 현재 생산중인 시료에 대한 정보 표기
     2) 대기 주문 확인: 한 번에 하나의 주문에 대해서만 생산할 수 있으므로 생산라인의 대기열은 FIFO 활용. 대기하고 있는 목록 출력.
 6. 출고 처리
-    1) confirmed 주문에 대하여 출고 처리하면 주문 상태를 release로 전환.
+    1) confirmed 주문에 대하여 출고 처리하면 주문 상태를 released로 전환.
 
 ## 시스템 동작
 주문 등록(reserved) -> 승인 여부 결정 -> 승인이면 재고확인, 거절이면 rejected.
-재고 확인 -> 재고 충분하면, 출고 준비(confirmed) -> 출고 처리(release)
-재고 확인 -> 재고 부족하면 생산 요청(producing) -> 생산 완료(완료 시간에 도달하면) 출고 준비(confirmed) -> 출고 처리(release)
+재고 확인 -> 재고 충분하면, 출고 준비(confirmed) -> 출고 처리(released)
+재고 확인 -> 재고 부족하면 생산 요청(producing) -> 생산 완료(완료 시간에 도달하면) 출고 준비(confirmed) -> 출고 처리(released)
 
 ## Agent 팀
 
