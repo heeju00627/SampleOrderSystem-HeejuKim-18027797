@@ -3,17 +3,17 @@
 #include <JsonLib/json.hpp>
 
 struct Order {
-    std::string orderId;               // ORD-YYYYMMDD-NNNN, 자동 부여
+    std::string orderId;
     std::string sampleId;
     std::string customerName;
-    int         orderQty;
-    std::string status;                // reserved/confirmed/producing/released/rejected
-    int         productionQty;         // 실생산 수량
-    double      totalProductionMinutes;// 총 생산 시간 (분)
-    std::string queuedAt;             // ISO 8601, 없으면 ""
-    std::string productionStartedAt;  // ISO 8601, 없으면 ""
-    std::string estimatedCompletionAt;// ISO 8601, 없으면 ""
-    std::string createdAt;            // ISO 8601
+    int         orderQty              = 0;
+    std::string status;
+    int         productionQty         = 0;
+    double      totalProductionMinutes= 0.0;
+    std::string queuedAt;
+    std::string productionStartedAt;
+    std::string estimatedCompletionAt;
+    std::string createdAt;
 };
 
 inline json::Value orderToJson(const Order& o) {
