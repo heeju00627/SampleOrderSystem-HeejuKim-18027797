@@ -45,11 +45,11 @@
     "orderQty": 40,
     "status": "producing",
     "productionQty": 48,
-    "totalProductionMinutes": 38.4,
-    "queuedAt": "2026-05-08T04:00:00",
-    "productionStartedAt": "2026-05-08T04:00:00",
-    "estimatedCompletionAt": "2026-05-08T04:38:24",
-    "createdAt": "2026-05-08T04:00:00"
+    "totalProductionMinutes": 259200.0,
+    "queuedAt": "2026-05-08T10:00:00",
+    "productionStartedAt": "2026-05-08T10:00:00",
+    "estimatedCompletionAt": "2027-01-01T10:00:00",
+    "createdAt": "2026-05-08T10:00:00"
   },
   {
     "orderId": "ORD-20260508-0005",
