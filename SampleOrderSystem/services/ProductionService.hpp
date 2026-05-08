@@ -136,13 +136,12 @@ private:
 
         Order* next = waiting.front();
         // 시각 역행 방지: now()와 직전 완료 시각 중 늦은 것을 시작 시각으로
-        auto startTp = std::max(clock_->now(), prevCompletedAt);
-        auto endTp   = startTp + std::chrono::duration_cast<
+        auto endTp   = prevCompletedAt + std::chrono::duration_cast<
             std::chrono::system_clock::duration>(
                 std::chrono::duration<double, std::ratio<60>>(
                     next->totalProductionMinutes));
 
-        next->productionStartedAt   = TimeUtils::toIso8601(startTp);
+        next->productionStartedAt   = TimeUtils::toIso8601(prevCompletedAt);
         next->estimatedCompletionAt = TimeUtils::toIso8601(endTp);
         orderRepo_->update(*next);
     }
