@@ -121,7 +121,8 @@ private:
                 StockStatus::toString(sv)
             });
         }
-        ConsoleUI::printTable(headers, rows, 14);
+        //           시료ID  이름   min/ea  수율  재고  상태
+        ConsoleUI::printTable(headers, rows, { 8, 20, 8, 6, 6, 6 });
     }
 
     void searchSample() {
@@ -134,7 +135,7 @@ private:
             rows.push_back({ s.sampleId, s.name,
                 formatDouble(s.avgProductionTime), formatDouble(s.yield),
                 std::to_string(s.stockQty) });
-        ConsoleUI::printTable(headers, rows, 14);
+        ConsoleUI::printTable(headers, rows, { 8, 20, 8, 6, 6 });
     }
 
     void registerSample() {
@@ -258,7 +259,8 @@ private:
                              ratio,
                              StockStatus::toString(sv) });
         }
-        ConsoleUI::printTable(headers, rows, 12);
+        //           시료ID  이름   재고  수요  잔여율  상태
+        ConsoleUI::printTable(headers, rows, { 8, 20, 6, 6, 8, 6 });
     }
 
     // ── 5. 생산 라인 조회 ────────────────────────────────────

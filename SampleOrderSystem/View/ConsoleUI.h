@@ -155,18 +155,18 @@ inline std::string truncateToDisplay(const std::string& s, int maxDisplay) {
     return s;
 }
 
-inline void printTable(const std::vector<std::string>& headers,
-                       const std::vector<std::vector<std::string>>& rows,
-                       int colWidth = 15) {
-    // setw는 바이트 기준이므로 한글 포함 시 보정값(byteLen - dispWidth)을 더함
-    auto adjustedSetw = [&](const std::string& s) {
-        return colWidth + (static_cast<int>(s.size()) - displayWidth(s));
+// 컬럼별 너비를 지정하는 내부 구현
+inline void printTableImpl(const std::vector<std::string>& headers,
+                           const std::vector<std::vector<std::string>>& rows,
+                           const std::vector<int>& widths) {
+    auto aw = [](const std::string& s, int cw) {
+        return cw + (static_cast<int>(s.size()) - displayWidth(s));
     };
 
     setColor(Color::Cyan);
     std::cout << "  ";
-    for (const auto& h : headers)
-        std::cout << std::left << std::setw(adjustedSetw(h)) << h;
+    for (size_t i = 0; i < headers.size(); ++i)
+        std::cout << std::left << std::setw(aw(headers[i], widths[i])) << headers[i];
     std::cout << '\n';
     resetColor();
     printLine('-');
@@ -177,15 +177,31 @@ inline void printTable(const std::vector<std::string>& headers,
         std::cout << "  ";
         for (size_t i = 0; i < headers.size(); ++i) {
             std::string cell = (i < row.size()) ? row[i] : "";
-            // display-width 기준으로 잘라내기
-            if (displayWidth(cell) > colWidth - 1)
-                cell = truncateToDisplay(cell, colWidth - 3) + "..";
-            std::cout << std::left << std::setw(adjustedSetw(cell)) << cell;
+            int cw = widths[i];
+            if (displayWidth(cell) > cw - 1)
+                cell = truncateToDisplay(cell, cw - 3) + "..";
+            std::cout << std::left << std::setw(aw(cell, cw)) << cell;
         }
         std::cout << '\n';
         even = !even;
     }
     resetColor();
+}
+
+// 단일 너비: 모든 컬럼에 동일한 너비 적용
+inline void printTable(const std::vector<std::string>& headers,
+                       const std::vector<std::vector<std::string>>& rows,
+                       int colWidth = 15) {
+    printTableImpl(headers, rows, std::vector<int>(headers.size(), colWidth));
+}
+
+// 컬럼별 너비: widths 크기가 headers와 다르면 나머지는 마지막 너비로 채움
+inline void printTable(const std::vector<std::string>& headers,
+                       const std::vector<std::vector<std::string>>& rows,
+                       const std::vector<int>& colWidths) {
+    std::vector<int> w = colWidths;
+    while (w.size() < headers.size()) w.push_back(w.back());
+    printTableImpl(headers, rows, w);
 }
 
 inline void printMenuItem(int num, const std::string& label, bool isExit = false) {
