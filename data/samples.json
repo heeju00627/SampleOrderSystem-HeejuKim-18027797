@@ -18,7 +18,7 @@
     "name": "SiC 기판",
     "avgProductionTime": 0.6,
     "yield": 0.95,
-    "stockQty": 200
+    "stockQty": 0
   },
   {
     "sampleId": "S0004",

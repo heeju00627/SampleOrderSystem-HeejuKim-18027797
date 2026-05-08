@@ -111,7 +111,7 @@ private:
         std::vector<std::string> headers = { "시료ID", "이름", "min/ea", "수율", "재고", "상태" };
         std::vector<std::vector<std::string>> rows;
         for (const auto& s : samples) {
-            int demand = calcTotalDemand(s.sampleId);
+            int demand = calcReservedDemand(s.sampleId);
             auto sv = StockStatus::evaluate(s.stockQty, demand);
             rows.push_back({
                 s.sampleId, s.name,
@@ -244,23 +244,28 @@ private:
 
     void showInventory() {
         ConsoleUI::printSubHeader("시료별 재고 현황");
+        ConsoleUI::printInfo("※ 수요: 승인 대기 중(reserved) 주문 합계  |  재고는 승인 시 자동 차감됨");
         auto samples = sampleSvc_->findAll();
-        std::vector<std::string> headers = { "시료ID", "이름", "재고", "수요", "잔여율", "상태" };
+        std::vector<std::string> headers = { "시료ID", "이름", "재고", "예약수요", "잔여율", "상태" };
         std::vector<std::vector<std::string>> rows;
         for (const auto& s : samples) {
-            int demand = calcTotalDemand(s.sampleId);
+            int demand = calcReservedDemand(s.sampleId);
             auto sv = StockStatus::evaluate(s.stockQty, demand);
-            std::string ratio = demand > 0
-                ? std::to_string(s.stockQty * 100 / demand) + "%"
-                : (s.stockQty > 0 ? "100%" : "고갈");
+            std::string ratio;
+            if (s.stockQty == 0)
+                ratio = "0%";
+            else if (demand == 0)
+                ratio = "-";
+            else
+                ratio = std::to_string(s.stockQty * 100 / demand) + "%";
             rows.push_back({ s.sampleId, s.name,
                              std::to_string(s.stockQty),
-                             std::to_string(demand),
+                             demand > 0 ? std::to_string(demand) : "-",
                              ratio,
                              StockStatus::toString(sv) });
         }
-        //           시료ID  이름   재고  수요  잔여율  상태
-        ConsoleUI::printTable(headers, rows, { 8, 20, 6, 6, 8, 6 });
+        //           시료ID  이름   재고  예약수요  잔여율  상태
+        ConsoleUI::printTable(headers, rows, { 8, 20, 6, 8, 8, 6 });
     }
 
     // ── 5. 생산 라인 조회 ────────────────────────────────────
@@ -324,12 +329,12 @@ private:
     }
 
     // ── 헬퍼 ────────────────────────────────────────────────
-    int calcTotalDemand(const std::string& sampleId) const {
+    // confirmed/producing 주문은 approve() 시 stockQty에서 이미 차감됨.
+    // 미확정(reserved) 주문만 "미래 수요"로 집계한다.
+    int calcReservedDemand(const std::string& sampleId) const {
         int total = 0;
-        for (const auto& st : {"confirmed", "producing"}) {
-            for (const auto& o : orderSvc_->findByStatus(st))
-                if (o.sampleId == sampleId) total += o.orderQty;
-        }
+        for (const auto& o : orderSvc_->findByStatus("reserved"))
+            if (o.sampleId == sampleId) total += o.orderQty;
         return total;
     }
 
