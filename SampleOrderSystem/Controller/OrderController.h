@@ -162,7 +162,12 @@ private:
         ConsoleUI::printSubHeader("시료 주문");
         showSampleList();
         std::cout << '\n';
-        std::string sampleId   = ConsoleUI::getStringInput("  시료ID  > ");
+        std::string sampleId = ConsoleUI::getStringInput("  시료ID (0=취소) > ");
+        if (sampleId.empty() || sampleId == "0") {
+            ConsoleUI::printInfo("취소됐습니다.");
+            ConsoleUI::pressEnterToContinue();
+            return;
+        }
         std::string customerName = ConsoleUI::getStringInput("  고객명  > ");
         int qty = ConsoleUI::getIntInput("  주문수량 > ");
         try {
