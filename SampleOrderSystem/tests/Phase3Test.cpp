@@ -100,6 +100,16 @@ TEST_F(SampleServiceTest, CreateValidSampleSucceeds) {
     EXPECT_NO_THROW(svc.create(s));
 }
 
+TEST_F(SampleServiceTest, CreateWithNegativeStockQtyThrows) {
+    Sample s = validSample(); s.stockQty = -1;
+    EXPECT_THROW(svc.create(s), std::invalid_argument);
+}
+
+TEST_F(SampleServiceTest, CreateWithEmptySampleIdThrows) {
+    Sample s = validSample(); s.sampleId = "";
+    EXPECT_THROW(svc.create(s), std::invalid_argument);
+}
+
 TEST_F(SampleServiceTest, SearchByKeyword) {
     std::vector<Sample> samples = {
         Sample{ "S0001", "AlGaN 에피", 1.5, 0.85, 0 },
@@ -137,6 +147,18 @@ protected:
         return o;
     }
 };
+
+TEST_F(OrderServiceTest, PlaceOrderSuccess) {
+    Sample s = baseSample();
+    EXPECT_CALL(*sampleRepo, getById("S0001"))
+        .WillOnce(::testing::Return(std::optional<Sample>{s}));
+    EXPECT_CALL(*orderRepo, add(::testing::_)).Times(1);
+
+    Order result = svc.placeOrder("S0001", "테스트고객", 10);
+    EXPECT_EQ(result.status, "reserved");
+    EXPECT_EQ(result.sampleId, "S0001");
+    EXPECT_EQ(result.orderQty, 10);
+}
 
 TEST_F(OrderServiceTest, PlaceOrderWithUnknownSampleThrows) {
     EXPECT_CALL(*sampleRepo, getById("S9999"))
@@ -188,6 +210,39 @@ TEST_F(OrderServiceTest, ApproveRejectedThrows) {
     EXPECT_CALL(*orderRepo, getById("ORD-20260508-0001"))
         .WillOnce(::testing::Return(std::optional<Order>{o}));
     EXPECT_THROW(svc.approve("ORD-20260508-0001"), std::invalid_argument);
+}
+
+TEST_F(OrderServiceTest, RejectReservedOrder) {
+    Order o = reservedOrder();
+    EXPECT_CALL(*orderRepo, getById("ORD-20260508-0001"))
+        .WillOnce(::testing::Return(std::optional<Order>{o}));
+    EXPECT_CALL(*orderRepo, update(::testing::Field(&Order::status, "rejected"))).Times(1);
+    EXPECT_NO_THROW(svc.reject("ORD-20260508-0001"));
+}
+
+TEST_F(OrderServiceTest, RejectNonReservedThrows) {
+    Order o = reservedOrder(); o.status = "confirmed";
+    EXPECT_CALL(*orderRepo, getById("ORD-20260508-0001"))
+        .WillOnce(::testing::Return(std::optional<Order>{o}));
+    EXPECT_THROW(svc.reject("ORD-20260508-0001"), std::invalid_argument);
+}
+
+TEST_F(OrderServiceTest, FindByStatusReturnsMatching) {
+    std::vector<Order> orders = { reservedOrder("ORD-001"), reservedOrder("ORD-002") };
+    orders[1].status = "confirmed";
+    EXPECT_CALL(*orderRepo, getAll()).WillOnce(::testing::Return(orders));
+    auto result = svc.findByStatus("reserved");
+    ASSERT_EQ(result.size(), 1u);
+    EXPECT_EQ(result[0].orderId, "ORD-001");
+}
+
+TEST_F(OrderServiceTest, FindByIdDelegatestoRepo) {
+    Order o = reservedOrder();
+    EXPECT_CALL(*orderRepo, getById("ORD-20260508-0001"))
+        .WillOnce(::testing::Return(std::optional<Order>{o}));
+    auto result = svc.findById("ORD-20260508-0001");
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result->orderId, "ORD-20260508-0001");
 }
 
 TEST_F(OrderServiceTest, ReleaseConfirmedOrder) {
