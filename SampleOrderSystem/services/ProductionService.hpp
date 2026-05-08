@@ -45,11 +45,11 @@ public:
                 anyCompleted = true;
 
                 // 3~4. 슬롯이 비었으므로 대기 주문 시작
-                startNextInQueue(all, completionAt(*active));
+                startNextInQueue(all, completionAt(*active)); // 반환값 무시(anyCompleted 이미 true)
             } else if (!active) {
                 // 생산 중인 주문이 없을 때도 대기 중인 주문이 있으면 시작
-                startNextInQueue(all, clock_->now());
-                anyCompleted = true; // 다음 이터레이션에서 새 activeOrder 완료 여부 재확인
+                if (startNextInQueue(all, clock_->now()))
+                    anyCompleted = true; // 시작한 경우만 재확인
             }
         }
     }
@@ -98,15 +98,15 @@ std::chrono::system_clock::time_point completionAt(const Order& o) const {
         return TimeUtils::parseIso8601(o.estimatedCompletionAt);
     }
 
-    // 대기 목록에서 다음 주문을 꺼내 생산 시작 처리
-    void startNextInQueue(std::vector<Order>& all,
+    // 대기 목록에서 다음 주문을 꺼내 생산 시작 처리. 시작했으면 true 반환.
+    bool startNextInQueue(std::vector<Order>& all,
                           std::chrono::system_clock::time_point prevCompletedAt) {
         // 대기 중인 주문을 queuedAt 순으로 정렬
         std::vector<Order*> waiting;
         for (auto& o : all)
             if (o.status == "producing" && o.productionStartedAt.empty())
                 waiting.push_back(&o);
-        if (waiting.empty()) return;
+        if (waiting.empty()) return false;
 
         std::sort(waiting.begin(), waiting.end(),
             [](const Order* a, const Order* b) { return a->queuedAt < b->queuedAt; });
@@ -121,5 +121,6 @@ std::chrono::system_clock::time_point completionAt(const Order& o) const {
         next->productionStartedAt   = TimeUtils::toIso8601(prevCompletedAt);
         next->estimatedCompletionAt = TimeUtils::toIso8601(endTp);
         orderRepo_->update(*next);
+        return true;
     }
 };
