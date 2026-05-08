@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-#include "../Controller/OrderController.h"
+#include "../Controller/UIHelpers.hpp"
 
 // ============================================================
 // StockStatus 순수 함수 테스트

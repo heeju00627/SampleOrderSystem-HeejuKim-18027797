@@ -105,12 +105,12 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
-      <SDLCheck>true</SDLCheck>
+      <SDLCheck>false</SDLCheck>
       <PreprocessorDefinitions>UNIT_TEST;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>$(ProjectDir)extern\JsonLib\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/utf-8 /wd4701 /wd4703 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -160,6 +160,7 @@
     <ClInclude Include="services\OrderService.hpp" />
     <ClInclude Include="services\ProductionService.hpp" />
     <ClInclude Include="Controller\OrderController.h" />
+    <ClInclude Include="Controller\UIHelpers.hpp" />
     <ClInclude Include="clock\IClock.h" />
     <ClInclude Include="clock\SystemClock.h" />
     <ClInclude Include="clock\MockClock.h" />

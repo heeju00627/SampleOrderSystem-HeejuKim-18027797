@@ -1,5 +1,6 @@
 #pragma once
 #include "IController.h"
+#include "UIHelpers.hpp"
 #include "../View/ConsoleView.h"
 #include "../services/SampleService.hpp"
 #include "../services/OrderService.hpp"
@@ -11,42 +12,13 @@
 #include <sstream>
 #include <iomanip>
 
-// ── 재고 상태 판단 순수 함수 ──────────────────────────────────
-struct StockStatus {
-    enum Value { Depleted, Short, Sufficient };
-
-    // 재고=0 → 고갈, 0<재고<합계 → 부족, 재고>=합계 → 여유
-    static Value evaluate(int stockQty, int totalDemand) {
-        if (stockQty <= 0)            return Depleted;
-        if (stockQty < totalDemand)   return Short;
-        return Sufficient;
+// ── 재고 상태 → 색상 (ConsoleUI 의존, 테스트 제외) ───────────
+inline ConsoleUI::Color stockStatusColor(StockStatus::Value v) {
+    switch (v) {
+        case StockStatus::Depleted: return ConsoleUI::Color::Red;
+        case StockStatus::Short:    return ConsoleUI::Color::Yellow;
+        default:                    return ConsoleUI::Color::Green;
     }
-
-    static ConsoleUI::Color toColor(Value v) {
-        switch (v) {
-            case Depleted:  return ConsoleUI::Color::Red;
-            case Short:     return ConsoleUI::Color::Yellow;
-            default:        return ConsoleUI::Color::Green;
-        }
-    }
-
-    static std::string toString(Value v) {
-        switch (v) {
-            case Depleted:  return "고갈";
-            case Short:     return "부족";
-            default:        return "여유";
-        }
-    }
-};
-
-// ── 잔여 시간 포맷 순수 함수 ─────────────────────────────────
-inline std::string formatRemainingTime(double minutes) {
-    int totalMin = static_cast<int>(minutes);
-    if (totalMin <= 0) return "0m";
-    int h = totalMin / 60;
-    int m = totalMin % 60;
-    if (h > 0) return std::to_string(h) + "h " + std::to_string(m) + "m";
-    return std::to_string(m) + "m";
 }
 
 // ── 주문 상태 → 색상 ─────────────────────────────────────────
@@ -55,7 +27,7 @@ inline ConsoleUI::Color statusColor(const std::string& status) {
     if (status == "producing") return ConsoleUI::Color::Cyan;
     if (status == "released")  return ConsoleUI::Color::Gray;
     if (status == "rejected")  return ConsoleUI::Color::Red;
-    return ConsoleUI::Color::White; // reserved
+    return ConsoleUI::Color::White;
 }
 
 // ─────────────────────────────────────────────────────────────
