@@ -18,6 +18,7 @@ Release/
 packages/**/
 !packages/.gitignore
 
-# Memory & local config
-.claude/
+# Memory & local config (agents는 포함)
+.claude/*
+!.claude/agents/
 .mcp.json

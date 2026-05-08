@@ -1,5 +1,15 @@
 # Phase 4 설계 문서: 생산 라인 시뮬레이터
 
+## Agent 참여
+
+| 단계 | Agent | 역할 |
+|------|-------|------|
+| ② 설계 검토 | **doc-consistency** | `applyLazyUpdates()` 알고리즘이 plan.md의 Lazy 시간 처리 원칙과 일치하는지, IClock 인터페이스가 Phase 3 서비스와 충돌 없는지 확인 |
+| ③ 구현 | **test** | MockClock을 활용해 시간 경과 시나리오를 TDD로 구현. 연쇄 완료·FIFO 순서 케이스 집중 |
+| ④ 코드 검토 | **doc-consistency** | 멱등성 보장 여부 확인, 타임스탬프 파싱 유틸리티 위치가 설계와 일치하는지 확인 |
+
+---
+
 ## 목표
 
 이 Phase가 끝나면 다음이 가능하다.
