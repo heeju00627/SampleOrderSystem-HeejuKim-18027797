@@ -48,7 +48,7 @@
 |------|------|
 | `sampleId` | 비어 있으면 거부 |
 | `sampleId` 중복 | 이미 존재하면 등록 거부 |
-| `avgProductionTime` | 1 이상 정수 |
+| `avgProductionTime` | 0.1 이상 2.0 이하 실수(double) |
 | `yield` | 0.0 초과 1.0 이하 |
 | `stockQty` | 0 이상 정수 |
 
@@ -60,7 +60,7 @@
 
 | 메서드 | 설명 |
 |--------|------|
-| `placeOrder(sampleId, customerName, qty)` | 주문 접수 → `reserved` |
+| `placeOrder(sampleId, customerName, qty) → Order` | 주문 접수 → `reserved`, 생성된 Order 반환 |
 | `approve(orderId)` | 승인 처리 (재고 확인 후 `confirmed` 또는 `producing`) |
 | `reject(orderId)` | 거절 → `rejected` |
 | `findByStatus(status)` | 상태별 주문 조회 |
@@ -81,6 +81,7 @@ approve(orderId):
        - queuedAt = 현재 시각
        - 주문 상태 → producing
        - 재고 차감: stockQty -= 현재 재고 (가용 재고 전량 선점)
+       - productionStartedAt, estimatedCompletionAt은 Phase 4에서 설정
 ```
 
 > `producing`으로 전이 시 재고를 선점하는 이유: 같은 시료에 대한 이후 주문이 이미 할당된 재고를 중복 사용하지 않도록 하기 위함.
@@ -132,7 +133,7 @@ calcTotalMinutes(productionQty, avgProductionTime):
 | 1 | orderQty=30, stockQty=50, yield=0.85 | productionQty = 0 (재고 충분) |
 | 2 | orderQty=30, stockQty=10, yield=0.85 | 부족분=20, qty=ceil(20/(0.85×0.9))=ceil(26.1)=27 |
 | 3 | orderQty=10, stockQty=0, yield=1.0 | qty=ceil(10/0.9)=ceil(11.1)=12 |
-| 4 | productionQty=27, avgTime=120 | totalMinutes=3240 |
+| 4 | productionQty=12, avgTime=1.5 | totalMinutes=18.0 |
 
 ### OrderService
 
