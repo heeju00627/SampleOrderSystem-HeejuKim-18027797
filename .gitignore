@@ -22,6 +22,9 @@ packages/**/
 coverage/
 *.log
 
+# 프로젝트 내부에 생성되는 런타임 data 폴더 (루트 data/만 버전 관리)
+SampleOrderSystem/data/
+
 # Memory & local config (agents는 포함)
 .claude/*
 !.claude/agents/
