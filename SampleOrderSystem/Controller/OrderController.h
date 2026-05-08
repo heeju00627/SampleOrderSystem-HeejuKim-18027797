@@ -180,16 +180,20 @@ private:
         auto reserved = orderSvc_->findByStatus("reserved");
         if (reserved.empty()) { ConsoleUI::printEmpty(); ConsoleUI::pressEnterToContinue(); return; }
 
-        std::vector<std::string> headers = { "주문ID", "시료ID", "고객명", "수량", "접수일시" };
+        std::vector<std::string> headers = { "번호", "주문ID", "시료ID", "고객명", "수량", "접수일시" };
         std::vector<std::vector<std::string>> rows;
-        for (const auto& o : reserved)
-            rows.push_back({ o.orderId, o.sampleId, o.customerName,
-                             std::to_string(o.orderQty), o.createdAt });
-        ConsoleUI::printTable(headers, rows, { 20, 8, 12, 6, 20 });
+        for (size_t i = 0; i < reserved.size(); ++i)
+            rows.push_back({ std::to_string(i + 1), reserved[i].orderId,
+                             reserved[i].sampleId, reserved[i].customerName,
+                             std::to_string(reserved[i].orderQty), reserved[i].createdAt });
+        ConsoleUI::printTable(headers, rows, { 5, 20, 8, 12, 6, 20 });
         std::cout << '\n';
 
-        std::string orderId = ConsoleUI::getStringInput("  주문ID > ");
-        if (orderId.empty()) { ConsoleUI::pressEnterToContinue(); return; }
+        int sel = ConsoleUI::getIntInput("  번호 선택 (0=취소) > ");
+        if (sel <= 0 || sel > static_cast<int>(reserved.size())) {
+            ConsoleUI::pressEnterToContinue(); return;
+        }
+        std::string orderId = reserved[sel - 1].orderId;
 
         bool approve = ConsoleUI::getYNInput("  [Y] 승인 / [N] 거절");
         if (approve) {
@@ -333,15 +337,20 @@ private:
         auto confirmed = orderSvc_->findByStatus("confirmed");
         if (confirmed.empty()) { ConsoleUI::printEmpty(); ConsoleUI::pressEnterToContinue(); return; }
 
-        std::vector<std::string> headers = { "주문ID", "시료ID", "고객명", "수량" };
+        std::vector<std::string> headers = { "번호", "주문ID", "시료ID", "고객명", "수량" };
         std::vector<std::vector<std::string>> rows;
-        for (const auto& o : confirmed)
-            rows.push_back({ o.orderId, o.sampleId, o.customerName, std::to_string(o.orderQty) });
-        ConsoleUI::printTable(headers, rows, 20);
+        for (size_t i = 0; i < confirmed.size(); ++i)
+            rows.push_back({ std::to_string(i + 1), confirmed[i].orderId,
+                             confirmed[i].sampleId, confirmed[i].customerName,
+                             std::to_string(confirmed[i].orderQty) });
+        ConsoleUI::printTable(headers, rows, { 5, 20, 8, 12, 6 });
         std::cout << '\n';
 
-        std::string orderId = ConsoleUI::getStringInput("  주문ID > ");
-        if (orderId.empty()) { ConsoleUI::pressEnterToContinue(); return; }
+        int sel = ConsoleUI::getIntInput("  번호 선택 (0=취소) > ");
+        if (sel <= 0 || sel > static_cast<int>(confirmed.size())) {
+            ConsoleUI::pressEnterToContinue(); return;
+        }
+        std::string orderId = confirmed[sel - 1].orderId;
 
         if (ConsoleUI::getYNInput("  출고 처리하시겠습니까?")) {
             try {
