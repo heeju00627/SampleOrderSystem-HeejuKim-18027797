@@ -1,0 +1,58 @@
+[
+  {
+    "sampleId": "S0001",
+    "name": "GaN 버퍼",
+    "avgProductionTime": 1.2,
+    "yield": 0.88,
+    "stockQty": 150
+  },
+  {
+    "sampleId": "S0002",
+    "name": "AlGaN 에피",
+    "avgProductionTime": 1.8,
+    "yield": 0.82,
+    "stockQty": 80
+  },
+  {
+    "sampleId": "S0003",
+    "name": "SiC 기판",
+    "avgProductionTime": 0.6,
+    "yield": 0.95,
+    "stockQty": 0
+  },
+  {
+    "sampleId": "S0004",
+    "name": "InGaN 양자우물",
+    "avgProductionTime": 2.0,
+    "yield": 0.75,
+    "stockQty": 30
+  },
+  {
+    "sampleId": "S0005",
+    "name": "GaAs 기판",
+    "avgProductionTime": 0.8,
+    "yield": 0.92,
+    "stockQty": 0
+  },
+  {
+    "sampleId": "S0006",
+    "name": "InP 에피",
+    "avgProductionTime": 1.5,
+    "yield": 0.80,
+    "stockQty": 55
+  },
+  {
+    "sampleId": "S0007",
+    "name": "ZnO 박막",
+    "avgProductionTime": 0.4,
+    "yield": 0.90,
+    "stockQty": 300
+  },
+  {
+    "sampleId": "S0008",
+    "name": "Si 도핑층",
+    "avgProductionTime": 0.3,
+    "yield": 0.97,
+    "stockQty": 500
+  }
+]

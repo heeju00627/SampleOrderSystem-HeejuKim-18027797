@@ -58,6 +58,13 @@ OpenCppCoverage.exe --sources C:*.cpp --export_type=html:coverage -- .\x64\Debug
 
 동작 원칙: 주문 시간을 기록해놓고, 총생산시간에 따른 예상 완료 시간 역시 기록해놓았다가, 프로그램이 껐따 켜지거나 특정 메뉴 동작하는 시점에 현재 시간에 맞게 분단위로 lazy하게 시료 상태 업데이트.
 
+재고 관리 원칙: approve() 시점에 stockQty를 즉시 차감(재고 충분 시 -= orderQty, 부족 시 = 0). 따라서 재고 현황 모니터링의 예약수요는 reserved(미승인) 주문만 집계하며, confirmed/producing은 이미 차감됐으므로 제외한다.
+
+핵심 Controller/View 파일:
+- `Controller/OrderController.h`: 6개 메뉴 핸들러, 메인 루프 (헤더 전용)
+- `Controller/UIHelpers.hpp`: StockStatus, formatRemainingTime 순수 함수
+- `View/ConsoleUI.h`: 색상·테이블·입력 헬퍼 (displayWidth 보정 포함)
+
 ## 주요 기능
 1. 시료 관리: 각 시료는 고유한 이름과 속성을 가지며, 시스템에 등록된 시료만 주문 가능.
     1) 등록: 새로운 시료를 시스템에 추가. 시료ID, 이름, 평균생산시간, 수율을 속성으로 입력해야함.

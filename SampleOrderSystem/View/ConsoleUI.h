@@ -6,8 +6,6 @@
 #include <limits>
 
 #ifdef _WIN32
-#  define NOMINMAX
-#  define WIN32_LEAN_AND_MEAN
 #  include <windows.h>
 #endif
 
@@ -114,18 +112,61 @@ inline std::string getStringInput(const std::string& prompt) {
     return val;
 }
 
+inline bool getYNInput(const std::string& prompt) {
+    while (true) {
+        std::string ans = getStringInput(prompt + " [Y/N]: ");
+        if (ans == "Y" || ans == "y") return true;
+        if (ans == "N" || ans == "n") return false;
+        printError("Y 또는 N을 입력해주세요.");
+    }
+}
+
 inline void pressEnterToContinue() {
     printColored("\n  Enter를 눌러 계속...", Color::Gray);
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 }
 
-inline void printTable(const std::vector<std::string>& headers,
-                       const std::vector<std::vector<std::string>>& rows,
-                       int colWidth = 15) {
+// UTF-8 문자열의 터미널 표시 너비 계산 (한글 등 3바이트 문자 = 2 표시폭)
+inline int displayWidth(const std::string& s) {
+    int w = 0;
+    for (size_t i = 0; i < s.size(); ) {
+        unsigned char c = static_cast<unsigned char>(s[i]);
+        if      (c < 0x80) { i += 1; w += 1; }
+        else if (c < 0xE0) { i += 2; w += 1; }
+        else if (c < 0xF0) { i += 3; w += 2; } // CJK(한글 포함)
+        else               { i += 4; w += 2; }
+    }
+    return w;
+}
+
+// display-width 기준으로 셀 잘라내기
+inline std::string truncateToDisplay(const std::string& s, int maxDisplay) {
+    int w = 0;
+    for (size_t i = 0; i < s.size(); ) {
+        unsigned char c = static_cast<unsigned char>(s[i]);
+        int cw, cb;
+        if      (c < 0x80) { cw = 1; cb = 1; }
+        else if (c < 0xE0) { cw = 1; cb = 2; }
+        else if (c < 0xF0) { cw = 2; cb = 3; }
+        else               { cw = 2; cb = 4; }
+        if (w + cw > maxDisplay) return s.substr(0, i) + "..";
+        w += cw; i += cb;
+    }
+    return s;
+}
+
+// 컬럼별 너비를 지정하는 내부 구현
+inline void printTableImpl(const std::vector<std::string>& headers,
+                           const std::vector<std::vector<std::string>>& rows,
+                           const std::vector<int>& widths) {
+    auto aw = [](const std::string& s, int cw) {
+        return cw + (static_cast<int>(s.size()) - displayWidth(s));
+    };
+
     setColor(Color::Cyan);
     std::cout << "  ";
-    for (const auto& h : headers)
-        std::cout << std::left << std::setw(colWidth) << h;
+    for (size_t i = 0; i < headers.size(); ++i)
+        std::cout << std::left << std::setw(aw(headers[i], widths[i])) << headers[i];
     std::cout << '\n';
     resetColor();
     printLine('-');
@@ -136,14 +177,31 @@ inline void printTable(const std::vector<std::string>& headers,
         std::cout << "  ";
         for (size_t i = 0; i < headers.size(); ++i) {
             std::string cell = (i < row.size()) ? row[i] : "";
-            if (cell.size() > static_cast<size_t>(colWidth - 1))
-                cell = cell.substr(0, colWidth - 4) + "...";
-            std::cout << std::left << std::setw(colWidth) << cell;
+            int cw = widths[i];
+            if (displayWidth(cell) > cw - 1)
+                cell = truncateToDisplay(cell, cw - 3) + "..";
+            std::cout << std::left << std::setw(aw(cell, cw)) << cell;
         }
         std::cout << '\n';
         even = !even;
     }
     resetColor();
+}
+
+// 단일 너비: 모든 컬럼에 동일한 너비 적용
+inline void printTable(const std::vector<std::string>& headers,
+                       const std::vector<std::vector<std::string>>& rows,
+                       int colWidth = 15) {
+    printTableImpl(headers, rows, std::vector<int>(headers.size(), colWidth));
+}
+
+// 컬럼별 너비: widths 크기가 headers와 다르면 나머지는 마지막 너비로 채움
+inline void printTable(const std::vector<std::string>& headers,
+                       const std::vector<std::vector<std::string>>& rows,
+                       const std::vector<int>& colWidths) {
+    std::vector<int> w = colWidths;
+    while (w.size() < headers.size()) w.push_back(w.back());
+    printTableImpl(headers, rows, w);
 }
 
 inline void printMenuItem(int num, const std::string& label, bool isExit = false) {
