@@ -238,6 +238,7 @@ private:
                     if (s) stockBefore = s->stockQty;
                 }
                 orderSvc_->approve(orderId);
+                prodSvc_->applyLazyUpdates(); // producing 전환 즉시 큐 처리 → startedAt/completionAt 설정
                 auto opt = orderSvc_->findById(orderId);
                 if (opt && opt->status == "confirmed") {
                     auto s = sampleSvc_->findById(opt->sampleId);
