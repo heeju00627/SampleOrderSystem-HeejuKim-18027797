@@ -5,9 +5,9 @@
 struct Sample {
     std::string sampleId;
     std::string name;
-    double      avgProductionTime; // 개당 생산시간 (min/ea, 0.1~2.0)
-    double      yield;             // 수율 0.60~1.00
-    int         stockQty;          // 현재 재고 (0 이상)
+    double      avgProductionTime = 0.0; // 개당 생산시간 (min/ea, 0.1~2.0)
+    double      yield             = 0.0; // 수율 0.60~1.00
+    int         stockQty          = 0;   // 현재 재고 (0 이상)
 };
 
 inline json::Value sampleToJson(const Sample& s) {

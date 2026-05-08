@@ -97,7 +97,14 @@ private:
     static std::chrono::system_clock::time_point parseIso8601(const std::string& s) {
         std::tm tm{};
         int y, mo, d, h, mi, sec;
-        if (std::sscanf(s.c_str(), "%d-%d-%dT%d:%d:%d", &y, &mo, &d, &h, &mi, &sec) == 6) {
+#ifdef _WIN32
+        const int parsed = sscanf_s(s.c_str(), "%d-%d-%dT%d:%d:%d",
+                                    &y, &mo, &d, &h, &mi, &sec);
+#else
+        const int parsed = std::sscanf(s.c_str(), "%d-%d-%dT%d:%d:%d",
+                                       &y, &mo, &d, &h, &mi, &sec);
+#endif
+        if (parsed == 6) {
             tm.tm_year = y - 1900; tm.tm_mon = mo - 1; tm.tm_mday = d;
             tm.tm_hour = h; tm.tm_min = mi; tm.tm_sec = sec;
             tm.tm_isdst = -1;
