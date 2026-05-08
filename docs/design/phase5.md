@@ -28,7 +28,8 @@
 | 파일 | 위치 | 설명 |
 |------|------|------|
 | `OrderController.h` | `Controller/` | 헤더 전용. 메인 루프 + 메뉴 디스패치 |
-| `ConsoleView.h/.cpp` (수정) | `View/` | ConsoleUI 색상·테이블 기능 통합, `getYNInput` 헬퍼 추가 |
+| `UIHelpers.hpp` | `Controller/` | StockStatus, formatRemainingTime 순수 함수 (OS 독립) |
+| `ConsoleUI.h` (수정) | `View/` | `getYNInput`, `displayWidth` 보정, 컬럼별 너비 `printTable` 추가 |
 | `main.cpp` (수정) | `SampleOrderSystem/` | 실제 앱 진입점 (#else 분기) 구현 |
 
 ---
@@ -127,8 +128,12 @@
 
      재고 상태 판단 (아래 순서로 우선 평가):
        ① 재고 = 0            → 고갈 (Red)
-       ② 0 < 재고 < 주문합계 → 부족 (Yellow)   ※ 주문합계: confirmed+producing 상태 주문수량 합산
-       ③ 재고 >= 주문합계     → 여유 (Green)
+       ② 0 < 재고 < 예약수요 → 부족 (Yellow)
+       ③ 재고 >= 예약수요     → 여유 (Green)
+
+     ※ 예약수요: reserved 상태 주문수량 합산.
+        confirmed/producing 주문은 approve() 시점에 stockQty에서 이미 차감됐으므로
+        이중 집계를 방지하기 위해 수요 계산에서 제외한다.
 ```
 
 ### 5. 생산 라인 조회
@@ -231,11 +236,14 @@ handleCommand(번호):
 
 | # | 시나리오 | 검증 방법 |
 |---|----------|-----------|
-| 1 | 재고 상태 판단: 재고=0 → 고갈 | StockStatus 순수 함수 |
-| 2 | 재고 상태 판단: 0 < 재고 < 합계 → 부족 | StockStatus 순수 함수 |
-| 3 | 재고 상태 판단: 재고 >= 합계 → 여유 | StockStatus 순수 함수 |
-| 4 | 잔여시간 포맷: 143분 → "2h 23m" | formatRemainingTime 순수 함수 |
-| 5 | 잔여시간 포맷: 45분 → "45m" | formatRemainingTime 순수 함수 |
-| 6 | 잔여시간 포맷: 0분 → "0m" | formatRemainingTime 순수 함수 |
+| 1 | 재고=0 → 고갈 | StockStatus 순수 함수 |
+| 2 | 0 < 재고 < 합계 → 부족 | StockStatus 순수 함수 |
+| 3 | 재고 >= 합계 → 여유 | StockStatus 순수 함수 |
+| 4 | 재고 = 합계 → 여유 (차감 완료, 잔여 없음이 아닌 충족 상태) | StockStatus 순수 함수 |
+| 5 | 재고=0, 합계=0 → 고갈 (재고 없음 우선) | StockStatus 순수 함수 |
+| 6 | 잔여시간 포맷: 143분 → "2h 23m" | formatRemainingTime 순수 함수 |
+| 7 | 잔여시간 포맷: 60분 → "1h 0m" | formatRemainingTime 순수 함수 |
+| 8 | 잔여시간 포맷: 45분 → "45m" | formatRemainingTime 순수 함수 |
+| 9 | 잔여시간 포맷: 0분 → "0m" | formatRemainingTime 순수 함수 |
 
 나머지 UI 동작은 Phase 6 통합 검증에서 수동으로 확인한다.

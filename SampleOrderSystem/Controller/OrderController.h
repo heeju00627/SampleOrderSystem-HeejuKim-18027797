@@ -192,10 +192,13 @@ private:
             try {
                 orderSvc_->approve(orderId);
                 auto opt = orderSvc_->findById(orderId);
-                if (opt && opt->status == "confirmed")
+                if (opt && opt->status == "confirmed") {
                     ConsoleUI::printSuccess("승인 완료 — 출고 대기 (confirmed)");
-                else
+                } else if (opt && opt->status == "producing") {
                     ConsoleUI::printSuccess("승인 완료 — 생산 등록 (producing)");
+                    ConsoleUI::printInfo("  실생산량: " + std::to_string(opt->productionQty) + "개"
+                        + "  /  예상완료: " + opt->estimatedCompletionAt);
+                }
             } catch (const std::exception& e) {
                 ConsoleUI::printError(e.what());
             }
@@ -223,8 +226,10 @@ private:
         std::cout << '\n';
 
         int choice = ConsoleUI::getIntInput("  선택 > ");
+        if (choice == 0) return;
         if (choice == 1) showOrdersByStatus();
         else if (choice == 2) showInventory();
+        else { ConsoleUI::printError("잘못된 메뉴 번호입니다."); }
         ConsoleUI::pressEnterToContinue();
     }
 
