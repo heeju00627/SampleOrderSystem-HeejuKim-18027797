@@ -106,7 +106,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>UNIT_TEST;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>$(ProjectDir)extern\JsonLib\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -138,6 +138,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="View\ConsoleView.cpp" />
     <ClCompile Include="extern\JsonLib\src\json.cpp" />
+    <ClCompile Include="tests\Phase2Test.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Controller\IController.h" />
@@ -146,6 +147,11 @@
     <ClInclude Include="View\ConsoleUI.h" />
     <ClInclude Include="repositories\IRepository.hpp" />
     <ClInclude Include="repositories\JsonRepository.hpp" />
+    <ClInclude Include="repositories\SampleRepository.hpp" />
+    <ClInclude Include="repositories\OrderRepository.hpp" />
+    <ClInclude Include="Model\Sample.hpp" />
+    <ClInclude Include="Model\Order.hpp" />
+    <ClInclude Include="Utils\TimeUtils.hpp" />
     <ClInclude Include="extern\JsonLib\include\JsonLib\json.hpp" />
   </ItemGroup>
   <ItemGroup>

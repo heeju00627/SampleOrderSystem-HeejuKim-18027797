@@ -27,8 +27,8 @@
 1. 시료 등록 (sampleId=S0001, avgTime=120, yield=0.85, 초기재고=100)
 2. 주문 접수 (sampleId=S0001, qty=30) → ORD-...-0001, status=reserved
 3. 주문 승인 → 재고 100 >= 30, status=confirmed, 재고=70
-4. 출고 처리 → status=release
-5. 모니터링: release 목록에 ORD-...-0001 확인, 재고=70 확인
+4. 출고 처리 → status=released
+5. 모니터링: released 목록에 ORD-...-0001 확인, 재고=70 확인
 ```
 
 ### 시나리오 2: 재고 부족 — 생산 후 출고
@@ -44,7 +44,7 @@
    - 현재 생산 중: ORD-..., 잔여 시간 표시
 5. (MockClock으로 1140분 경과 시뮬레이션)
 6. applyLazyUpdates() → status=confirmed, 재고=19 증가
-7. 출고 처리 → status=release
+7. 출고 처리 → status=released
 ```
 
 ### 시나리오 3: 프로그램 재시작 후 생산 상태 복원
@@ -102,7 +102,7 @@
 - [ ] 주문 거절 → rejected (모니터링 목록에 미표시 확인)
 - [ ] 생산 완료 lazy 처리 → confirmed 전이
 - [ ] FIFO 대기열 순서 유지
-- [ ] 출고 처리 → release
+- [ ] 출고 처리 → released
 - [ ] 모니터링: 상태별 목록, 재고 여유/부족/고갈 색상 표시
 - [ ] 생산 라인: 잔여 시간, 대기 순서 표시
 

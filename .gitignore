@@ -20,6 +20,8 @@ packages/**/
 
 # Runtime data (빌드 후 자동 생성)
 data/
+coverage/
+*.log
 
 # Memory & local config (agents는 포함)
 .claude/*

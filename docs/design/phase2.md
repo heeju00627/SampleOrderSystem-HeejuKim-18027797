@@ -37,7 +37,7 @@
 ```
 sampleId          문자열   "S0001" 형식, 직접 입력
 name              문자열   시료 이름
-avgProductionTime 정수     분 단위 (1 이상)
+avgProductionTime 실수(double)  개당 생산시간 (0.1 ~ 2.0 min/ea)
 yield             실수     0.60 ~ 1.00
 stockQty          정수     현재 재고 수량 (0 이상), 기본값 0
 ```
@@ -51,9 +51,9 @@ orderId                문자열   "ORD-YYYYMMDD-NNNN" 형식, 자동 부여
 sampleId               문자열   참조하는 시료 ID
 customerName           문자열   고객명
 orderQty               정수     주문 수량 (1 이상)
-status                 문자열   reserved / confirmed / producing / release / rejected
+status                 문자열   reserved / confirmed / producing / released / rejected
 productionQty          정수     실생산 수량 (승인 후 계산, 기본 0)
-totalProductionMinutes 정수     총 생산 시간 분 (승인 후 계산, 기본 0)
+totalProductionMinutes 실수(double)  총 생산 시간 분 (승인 후 계산, 기본 0.0)
 queuedAt               문자열   생산 대기열 진입 시각 ISO 8601, 없으면 빈 문자열
 productionStartedAt    문자열   실제 생산 시작 시각 ISO 8601, 없으면 빈 문자열
 estimatedCompletionAt  문자열   예상 완료 시각 ISO 8601, 없으면 빈 문자열

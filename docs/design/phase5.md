@@ -95,7 +95,7 @@
 
 ```
 4-1. 주문 상태별 목록
-     → 탭 형태로 reserved / confirmed / producing / release 목록 표시
+     → 탭 형태로 reserved / confirmed / producing / released 목록 표시
      (rejected 제외)
 
 4-2. 시료별 재고 현황
@@ -124,7 +124,7 @@
 ```
 → confirmed 상태 주문 목록 표시
 → 출고 처리할 주문 ID 입력
-→ 확인 후 status = release
+→ 확인 후 status = released
 → "출고 완료" 메시지
 ```
 
