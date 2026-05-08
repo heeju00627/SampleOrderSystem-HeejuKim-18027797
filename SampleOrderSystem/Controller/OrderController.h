@@ -244,15 +244,21 @@ private:
     void showInventory() {
         ConsoleUI::printSubHeader("시료별 재고 현황");
         auto samples = sampleSvc_->findAll();
-        std::vector<std::string> headers = { "시료ID", "이름", "재고", "상태" };
+        std::vector<std::string> headers = { "시료ID", "이름", "재고", "수요", "잔여율", "상태" };
         std::vector<std::vector<std::string>> rows;
         for (const auto& s : samples) {
             int demand = calcTotalDemand(s.sampleId);
             auto sv = StockStatus::evaluate(s.stockQty, demand);
+            std::string ratio = demand > 0
+                ? std::to_string(s.stockQty * 100 / demand) + "%"
+                : (s.stockQty > 0 ? "100%" : "고갈");
             rows.push_back({ s.sampleId, s.name,
-                             std::to_string(s.stockQty), StockStatus::toString(sv) });
+                             std::to_string(s.stockQty),
+                             std::to_string(demand),
+                             ratio,
+                             StockStatus::toString(sv) });
         }
-        ConsoleUI::printTable(headers, rows, 14);
+        ConsoleUI::printTable(headers, rows, 12);
     }
 
     // ── 5. 생산 라인 조회 ────────────────────────────────────

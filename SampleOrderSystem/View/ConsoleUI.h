@@ -126,13 +126,47 @@ inline void pressEnterToContinue() {
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 }
 
+// UTF-8 문자열의 터미널 표시 너비 계산 (한글 등 3바이트 문자 = 2 표시폭)
+inline int displayWidth(const std::string& s) {
+    int w = 0;
+    for (size_t i = 0; i < s.size(); ) {
+        unsigned char c = static_cast<unsigned char>(s[i]);
+        if      (c < 0x80) { i += 1; w += 1; }
+        else if (c < 0xE0) { i += 2; w += 1; }
+        else if (c < 0xF0) { i += 3; w += 2; } // CJK(한글 포함)
+        else               { i += 4; w += 2; }
+    }
+    return w;
+}
+
+// display-width 기준으로 셀 잘라내기
+inline std::string truncateToDisplay(const std::string& s, int maxDisplay) {
+    int w = 0;
+    for (size_t i = 0; i < s.size(); ) {
+        unsigned char c = static_cast<unsigned char>(s[i]);
+        int cw, cb;
+        if      (c < 0x80) { cw = 1; cb = 1; }
+        else if (c < 0xE0) { cw = 1; cb = 2; }
+        else if (c < 0xF0) { cw = 2; cb = 3; }
+        else               { cw = 2; cb = 4; }
+        if (w + cw > maxDisplay) return s.substr(0, i) + "..";
+        w += cw; i += cb;
+    }
+    return s;
+}
+
 inline void printTable(const std::vector<std::string>& headers,
                        const std::vector<std::vector<std::string>>& rows,
                        int colWidth = 15) {
+    // setw는 바이트 기준이므로 한글 포함 시 보정값(byteLen - dispWidth)을 더함
+    auto adjustedSetw = [&](const std::string& s) {
+        return colWidth + (static_cast<int>(s.size()) - displayWidth(s));
+    };
+
     setColor(Color::Cyan);
     std::cout << "  ";
     for (const auto& h : headers)
-        std::cout << std::left << std::setw(colWidth) << h;
+        std::cout << std::left << std::setw(adjustedSetw(h)) << h;
     std::cout << '\n';
     resetColor();
     printLine('-');
@@ -143,9 +177,10 @@ inline void printTable(const std::vector<std::string>& headers,
         std::cout << "  ";
         for (size_t i = 0; i < headers.size(); ++i) {
             std::string cell = (i < row.size()) ? row[i] : "";
-            if (cell.size() > static_cast<size_t>(colWidth - 1))
-                cell = cell.substr(0, colWidth - 4) + "...";
-            std::cout << std::left << std::setw(colWidth) << cell;
+            // display-width 기준으로 잘라내기
+            if (displayWidth(cell) > colWidth - 1)
+                cell = truncateToDisplay(cell, colWidth - 3) + "..";
+            std::cout << std::left << std::setw(adjustedSetw(cell)) << cell;
         }
         std::cout << '\n';
         even = !even;
