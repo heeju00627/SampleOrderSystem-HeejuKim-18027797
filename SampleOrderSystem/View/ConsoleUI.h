@@ -114,6 +114,15 @@ inline std::string getStringInput(const std::string& prompt) {
     return val;
 }
 
+inline bool getYNInput(const std::string& prompt) {
+    while (true) {
+        std::string ans = getStringInput(prompt + " [Y/N]: ");
+        if (ans == "Y" || ans == "y") return true;
+        if (ans == "N" || ans == "n") return false;
+        printError("Y 또는 N을 입력해주세요.");
+    }
+}
+
 inline void pressEnterToContinue() {
     printColored("\n  Enter를 눌러 계속...", Color::Gray);
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');

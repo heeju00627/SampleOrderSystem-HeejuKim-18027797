@@ -141,6 +141,7 @@
     <ClCompile Include="tests\Phase2Test.cpp" />
     <ClCompile Include="tests\Phase3Test.cpp" />
     <ClCompile Include="tests\Phase4Test.cpp" />
+    <ClCompile Include="tests\Phase5Test.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Controller\IController.h" />
@@ -158,6 +159,7 @@
     <ClInclude Include="services\SampleService.hpp" />
     <ClInclude Include="services\OrderService.hpp" />
     <ClInclude Include="services\ProductionService.hpp" />
+    <ClInclude Include="Controller\OrderController.h" />
     <ClInclude Include="clock\IClock.h" />
     <ClInclude Include="clock\SystemClock.h" />
     <ClInclude Include="clock\MockClock.h" />

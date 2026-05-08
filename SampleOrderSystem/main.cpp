@@ -20,13 +20,40 @@ int main(int argc, char* argv[]) {
 
 // ── 앱 빌드: UNIT_TEST 미정의 시 실제 애플리케이션 진입점 ──────
 #include <iostream>
+#include <memory>
+#include <filesystem>
+
+#include "Controller/OrderController.h"
+#include "repositories/SampleRepository.hpp"
+#include "repositories/OrderRepository.hpp"
+#include "services/SampleService.hpp"
+#include "services/OrderService.hpp"
+#include "services/ProductionService.hpp"
+#include "clock/SystemClock.h"
 
 int main() {
 #ifdef _WIN32
     SetConsoleCP(CP_UTF8);
     SetConsoleOutputCP(CP_UTF8);
 #endif
-    std::cout << "S-Semi 생산주문관리 시스템\n";
+
+    // exe 기준 data/ 경로
+    namespace fs = std::filesystem;
+    fs::path dataDir = fs::path("data");
+    fs::create_directories(dataDir);
+
+    auto sampleRepo = makeSampleRepository((dataDir / "samples.json").string());
+    auto orderRepo  = makeOrderRepository(
+        (dataDir / "orders.json").string(),
+        (dataDir / "order_seq.json").string());
+
+    auto clock      = std::make_shared<SystemClock>();
+    auto sampleSvc  = std::make_shared<SampleService>(sampleRepo);
+    auto orderSvc   = std::make_shared<OrderService>(sampleRepo, orderRepo);
+    auto prodSvc    = std::make_shared<ProductionService>(clock, orderRepo, sampleRepo);
+
+    OrderController controller(sampleSvc, orderSvc, prodSvc);
+    controller.run();
     return 0;
 }
 
