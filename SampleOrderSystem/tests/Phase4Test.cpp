@@ -121,7 +121,26 @@ TEST_F(ProductionServiceTest, CompletedOrderBecomesConfirmed) {
     EXPECT_EQ(orders[0].status, "confirmed");
 }
 
-// ── 케이스 3: A 완료 → B 생산 시작 ──────────────────────────
+// ── 케이스 3: A 완료, 대기 2개(B·C) → queuedAt 앞선 B 먼저 시작 ─
+TEST_F(ProductionServiceTest, CompletedOrderStartsEarliestQueuedFirst) {
+    Order A = makeActive("ORD-A", "S0001",
+                         BASE - std::chrono::minutes(65),
+                         BASE - std::chrono::minutes(5), 60.0);
+    // B가 나중에 큐 진입, C가 먼저 진입
+    Order B = makeQueued("ORD-B", "S0001", BASE - std::chrono::minutes(40), 20.0);
+    Order C = makeQueued("ORD-C", "S0001", BASE - std::chrono::minutes(50), 20.0);
+    std::vector<Order> orders = {A, B, C};
+    setupStatefulMock(orders);
+
+    svc.applyLazyUpdates();
+
+    // C가 먼저 큐 진입했으므로 C부터 생산 시작
+    auto& cFinal = orders[2];
+    EXPECT_FALSE(cFinal.productionStartedAt.empty());
+    EXPECT_EQ(cFinal.status, "producing");
+}
+
+// ── 케이스 3b: A 완료 → B 생산 시작 ─────────────────────────
 TEST_F(ProductionServiceTest, CompletedOrderStartsNextInQueue) {
     Order A = makeActive("ORD-A", "S0001",
                          BASE - std::chrono::minutes(65),
@@ -179,6 +198,19 @@ TEST_F(ProductionServiceTest, GetActiveOrderReturnsNulloptWhenNone) {
         .WillOnce(::testing::Return(std::vector<Order>{}));
 
     EXPECT_FALSE(svc.getActiveOrder().has_value());
+}
+
+// ── 케이스 6b: getActiveOrder() — 활성 주문 반환 ─────────────
+TEST_F(ProductionServiceTest, GetActiveOrderReturnsActiveOrder) {
+    Order A = makeActive("ORD-A", "S0001",
+                         BASE - std::chrono::minutes(30),
+                         BASE + std::chrono::minutes(30), 60.0);
+    EXPECT_CALL(*orderRepo, getAll())
+        .WillOnce(::testing::Return(std::vector<Order>{A}));
+
+    auto result = svc.getActiveOrder();
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result->orderId, "ORD-A");
 }
 
 // ── 케이스 7: getQueue() — queuedAt 오름차순 ────────────────
