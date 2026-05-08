@@ -5,6 +5,7 @@
 
 int main() {
 #ifdef _WIN32
+    SetConsoleCP(CP_UTF8);
     SetConsoleOutputCP(CP_UTF8);
 #endif
     std::cout << "S-Semi 시스템 시작\n";
