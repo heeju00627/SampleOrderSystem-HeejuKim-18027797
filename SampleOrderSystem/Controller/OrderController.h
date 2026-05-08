@@ -289,16 +289,34 @@ private:
     }
 
     void showOrdersByStatus() {
-        const std::vector<std::string> statuses = { "reserved", "confirmed", "producing", "released" };
-        const std::vector<std::string> headers = { "주문ID", "시료ID", "고객명", "수량", "상태" };
-        for (const auto& st : statuses) {
+        // reserved / confirmed: 주문ID | 시료ID | 고객명 | 주문량
+        const std::vector<std::string> basicHdr = { "주문ID", "시료ID", "고객명", "주문량" };
+        for (const auto& st : { "reserved", "confirmed", "released" }) {
             auto orders = orderSvc_->findByStatus(st);
-            ConsoleUI::printSubHeader(st + " (" + std::to_string(orders.size()) + "건)");
+            ConsoleUI::printSubHeader(std::string(st) + " (" + std::to_string(orders.size()) + "건)");
             std::vector<std::vector<std::string>> rows;
             for (const auto& o : orders)
                 rows.push_back({ o.orderId, o.sampleId, o.customerName,
-                                 std::to_string(o.orderQty), o.status });
-            ConsoleUI::printTable(headers, rows, 20);
+                                 std::to_string(o.orderQty) });
+            ConsoleUI::printTable(basicHdr, rows, { 20, 8, 12, 8 });
+        }
+
+        // producing: 주문ID | 시료ID | 고객명 | 주문량 | 부족분 | 실생산량 | 예상완료
+        {
+            auto orders = orderSvc_->findByStatus("producing");
+            ConsoleUI::printSubHeader("producing (" + std::to_string(orders.size()) + "건)");
+            const std::vector<std::string> prodHdr =
+                { "주문ID", "시료ID", "고객명", "주문량", "실생산량", "예상완료" };
+            std::vector<std::vector<std::string>> rows;
+            for (const auto& o : orders) {
+                rows.push_back({
+                    o.orderId, o.sampleId, o.customerName,
+                    std::to_string(o.orderQty),
+                    std::to_string(o.productionQty),
+                    o.estimatedCompletionAt.empty() ? "(대기중)" : o.estimatedCompletionAt
+                });
+            }
+            ConsoleUI::printTable(prodHdr, rows, { 20, 8, 12, 8, 8, 22 });
         }
     }
 

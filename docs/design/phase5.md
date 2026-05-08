@@ -128,10 +128,13 @@
 ```
 4-1. 주문 상태별 목록
      각 상태별 섹션 헤더 + 테이블 순차 출력 (rejected 제외)
-     ─── reserved (N건) ────
-     ─── confirmed (N건) ───
-     ─── producing (N건) ───
-     ─── released (N건) ────
+
+     reserved / confirmed / released:
+       테이블: 주문ID | 시료ID | 고객명 | 주문량
+
+     producing (생산 중):
+       테이블: 주문ID | 시료ID | 고객명 | 주문량 | 실생산량 | 예상완료
+       (예상완료 미설정 시 "(대기중)" 표시)
 
 4-2. 시료별 재고 현황
      테이블: 시료ID | 이름 | 재고 | 예약수요 | 충족률 | 상태
