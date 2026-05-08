@@ -216,7 +216,13 @@ private:
             std::cout << '\n';
         }
 
-        bool approve = ConsoleUI::getYNInput("  [Y] 승인 / [N] 거절");
+        auto choice = ConsoleUI::getYNOrCancelInput("  [Y] 승인 / [N] 거절");
+        if (!choice.has_value()) {
+            ConsoleUI::printInfo("취소됐습니다.");
+            ConsoleUI::pressEnterToContinue();
+            return;
+        }
+        bool approve = choice.value();
         if (approve) {
             try {
                 // 승인 전 재고 캡처
