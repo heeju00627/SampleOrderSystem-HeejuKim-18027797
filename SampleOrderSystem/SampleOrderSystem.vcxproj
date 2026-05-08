@@ -133,6 +133,10 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <PostBuildEvent>
+      <Command>robocopy "$(SolutionDir)data" "$(OutDir)data" /MIR /NFL /NDL /NJH /NJS &amp; exit 0</Command>
+      <Message>data/ 폴더를 출력 디렉터리에 복사</Message>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />

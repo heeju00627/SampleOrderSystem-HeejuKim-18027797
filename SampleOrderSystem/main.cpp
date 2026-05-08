@@ -34,15 +34,16 @@ int main(int argc, char* argv[]) {
 #include "Model/Sample.hpp"
 #include "Model/Order.hpp"
 
-int main() {
+int main(int argc, char* argv[]) {
 #ifdef _WIN32
     SetConsoleCP(CP_UTF8);
     SetConsoleOutputCP(CP_UTF8);
 #endif
 
-    // exe 기준 data/ 경로
+    // exe 위치 기준 data/ 경로 (어떤 디렉터리에서 실행해도 동일하게 동작)
     namespace fs = std::filesystem;
-    fs::path dataDir = fs::path("data");
+    fs::path exeDir  = fs::path(argv[0]).parent_path();
+    fs::path dataDir = exeDir / "data";
     fs::create_directories(dataDir);
 
     // unique_ptr → shared_ptr<IRepository<T>> 변환 (covariant 이동 허용)
