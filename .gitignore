@@ -18,6 +18,9 @@ Release/
 packages/**/
 !packages/.gitignore
 
+# Runtime data (빌드 후 자동 생성)
+data/
+
 # Memory & local config (agents는 포함)
 .claude/*
 !.claude/agents/
