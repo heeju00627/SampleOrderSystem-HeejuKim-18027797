@@ -1,0 +1,67 @@
+[
+  {
+    "orderId": "ORD-20260508-0001",
+    "sampleId": "S0001",
+    "customerName": "삼성전자",
+    "orderQty": 50,
+    "status": "reserved",
+    "productionQty": 0,
+    "totalProductionMinutes": 0.0,
+    "queuedAt": "",
+    "productionStartedAt": "",
+    "estimatedCompletionAt": "",
+    "createdAt": "2026-05-08T01:00:00"
+  },
+  {
+    "orderId": "ORD-20260508-0002",
+    "sampleId": "S0002",
+    "customerName": "SK하이닉스",
+    "orderQty": 100,
+    "status": "reserved",
+    "productionQty": 0,
+    "totalProductionMinutes": 0.0,
+    "queuedAt": "",
+    "productionStartedAt": "",
+    "estimatedCompletionAt": "",
+    "createdAt": "2026-05-08T02:00:00"
+  },
+  {
+    "orderId": "ORD-20260508-0003",
+    "sampleId": "S0003",
+    "customerName": "LG이노텍",
+    "orderQty": 200,
+    "status": "confirmed",
+    "productionQty": 0,
+    "totalProductionMinutes": 0.0,
+    "queuedAt": "",
+    "productionStartedAt": "",
+    "estimatedCompletionAt": "",
+    "createdAt": "2026-05-08T03:00:00"
+  },
+  {
+    "orderId": "ORD-20260508-0004",
+    "sampleId": "S0005",
+    "customerName": "DB하이텍",
+    "orderQty": 40,
+    "status": "producing",
+    "productionQty": 48,
+    "totalProductionMinutes": 38.4,
+    "queuedAt": "2026-05-08T04:00:00",
+    "productionStartedAt": "2026-05-08T04:00:00",
+    "estimatedCompletionAt": "2026-05-08T04:38:24",
+    "createdAt": "2026-05-08T04:00:00"
+  },
+  {
+    "orderId": "ORD-20260508-0005",
+    "sampleId": "S0004",
+    "customerName": "한국반도체",
+    "orderQty": 20,
+    "status": "released",
+    "productionQty": 30,
+    "totalProductionMinutes": 60.0,
+    "queuedAt": "2026-05-07T10:00:00",
+    "productionStartedAt": "2026-05-07T10:00:00",
+    "estimatedCompletionAt": "2026-05-07T11:00:00",
+    "createdAt": "2026-05-07T09:00:00"
+  }
+]
