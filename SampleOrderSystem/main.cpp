@@ -23,13 +23,16 @@ int main(int argc, char* argv[]) {
 #include <memory>
 #include <filesystem>
 
-#include "Controller/OrderController.h"
+#include "repositories/IRepository.hpp"
 #include "repositories/SampleRepository.hpp"
 #include "repositories/OrderRepository.hpp"
 #include "services/SampleService.hpp"
 #include "services/OrderService.hpp"
 #include "services/ProductionService.hpp"
 #include "clock/SystemClock.h"
+#include "Controller/OrderController.h"
+#include "Model/Sample.hpp"
+#include "Model/Order.hpp"
 
 int main() {
 #ifdef _WIN32
@@ -42,15 +45,18 @@ int main() {
     fs::path dataDir = fs::path("data");
     fs::create_directories(dataDir);
 
-    auto sampleRepo = makeSampleRepository((dataDir / "samples.json").string());
-    auto orderRepo  = makeOrderRepository(
-        (dataDir / "orders.json").string(),
-        (dataDir / "order_seq.json").string());
+    // unique_ptr → shared_ptr<IRepository<T>> 변환 (covariant 이동 허용)
+    std::shared_ptr<IRepository<Sample>> sampleRepo =
+        makeSampleRepository((dataDir / "samples.json").string());
+    std::shared_ptr<IRepository<Order>> orderRepo =
+        makeOrderRepository(
+            (dataDir / "orders.json").string(),
+            (dataDir / "order_seq.json").string());
 
-    auto clock      = std::make_shared<SystemClock>();
-    auto sampleSvc  = std::make_shared<SampleService>(sampleRepo);
-    auto orderSvc   = std::make_shared<OrderService>(sampleRepo, orderRepo);
-    auto prodSvc    = std::make_shared<ProductionService>(clock, orderRepo, sampleRepo);
+    auto clock     = std::make_shared<SystemClock>();
+    auto sampleSvc = std::make_shared<SampleService>(sampleRepo);
+    auto orderSvc  = std::make_shared<OrderService>(sampleRepo, orderRepo);
+    auto prodSvc   = std::make_shared<ProductionService>(clock, orderRepo, sampleRepo);
 
     OrderController controller(sampleSvc, orderSvc, prodSvc);
     controller.run();
