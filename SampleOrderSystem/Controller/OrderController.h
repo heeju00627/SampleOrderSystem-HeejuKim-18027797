@@ -300,7 +300,7 @@ private:
         ConsoleUI::printSubHeader("시료별 재고 현황");
         ConsoleUI::printInfo("※ 수요: 승인 대기 중(reserved) 주문 합계  |  재고는 승인 시 자동 차감됨");
         auto samples = sampleSvc_->findAll();
-        std::vector<std::string> headers = { "시료ID", "이름", "재고", "예약수요", "잔여율", "상태" };
+        std::vector<std::string> headers = { "시료ID", "이름", "재고", "예약수요", "충족률", "상태" };
         std::vector<std::vector<std::string>> rows;
         for (const auto& s : samples) {
             int demand = calcReservedDemand(s.sampleId);
@@ -311,7 +311,7 @@ private:
             else if (demand == 0)
                 ratio = "-";
             else
-                ratio = std::to_string(s.stockQty * 100 / demand) + "%";
+                ratio = std::to_string(s.stockQty * 100 / demand) + "%"; // 재고/예약수요
             rows.push_back({ s.sampleId, s.name,
                              std::to_string(s.stockQty),
                              demand > 0 ? std::to_string(demand) : "-",
