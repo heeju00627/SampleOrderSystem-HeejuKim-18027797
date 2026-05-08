@@ -193,7 +193,28 @@ private:
         if (sel <= 0 || sel > static_cast<int>(reserved.size())) {
             ConsoleUI::pressEnterToContinue(); return;
         }
-        std::string orderId = reserved[sel - 1].orderId;
+        const Order& selOrder = reserved[sel - 1];
+        std::string orderId = selOrder.orderId;
+
+        // 선택된 시료의 재고 현황 안내
+        auto sampleOpt = sampleSvc_->findById(selOrder.sampleId);
+        if (sampleOpt) {
+            int demand = calcReservedDemand(selOrder.sampleId);
+            auto sv = StockStatus::evaluate(sampleOpt->stockQty, demand);
+            ConsoleUI::Color sc = StockStatus::Value::Depleted == sv ? ConsoleUI::Color::Red
+                                : StockStatus::Value::Short    == sv ? ConsoleUI::Color::Yellow
+                                                                     : ConsoleUI::Color::Green;
+            std::cout << "\n  [재고 현황] ";
+            ConsoleUI::printColored(sampleOpt->name, ConsoleUI::Color::Cyan);
+            std::cout << "  현재재고: ";
+            ConsoleUI::printColored(std::to_string(sampleOpt->stockQty) + "개", sc);
+            std::cout << "  /  주문수량: " << selOrder.orderQty << "개";
+            if (sampleOpt->stockQty >= selOrder.orderQty)
+                ConsoleUI::printColored("  → 재고 충분 (즉시 confirmed)\n", ConsoleUI::Color::Green);
+            else
+                ConsoleUI::printColored("  → 재고 부족 (생산 필요, producing)\n", ConsoleUI::Color::Yellow);
+            std::cout << '\n';
+        }
 
         bool approve = ConsoleUI::getYNInput("  [Y] 승인 / [N] 거절");
         if (approve) {
