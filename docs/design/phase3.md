@@ -6,7 +6,8 @@
 |------|-------|------|
 | ② 설계 검토 | **doc-consistency** | 상태 전이 허용 표가 plan.md의 상태 전이 다이어그램과 일치하는지, ProductionCalculator 수식이 plan.md와 동일한지 확인 |
 | ③ 구현 | **test** | 유효성 검사·상태 전이·계산 공식을 TDD 순서로 구현. Mock Repository를 활용해 서비스 계층을 격리 테스트 |
-| ④ 코드 검토 | **doc-consistency** | 승인 처리 세부 흐름이 코드와 일치하는지, 재고 차감 시점이 설계대로인지 확인 |
+| ④ 커버리지 | **test** | `OpenCppCoverage.exe --sources C:*.cpp --export_type=html:coverage -- .\x64\Debug\SampleOrderSystem.exe` 실행 후 미커버 경로 보완 |
+| ⑤ 코드 검토 | **doc-consistency** | 승인 처리 세부 흐름이 코드와 일치하는지, 재고 차감 시점이 설계대로인지 확인 |
 
 ---
 
