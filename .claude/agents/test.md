@@ -92,6 +92,39 @@ public:
 | 4 | ProductionService lazy 갱신, FIFO 큐 | MockClock, MockOrderService |
 | 5 | 재고 상태 판단 함수, 잔여 시간 계산 | MockClock |
 
+## 코드 커버리지
+
+Phase 구현이 완료되면 커버리지를 측정해 보고한다.
+
+```powershell
+# 커버리지 측정 및 HTML 리포트 생성
+OpenCppCoverage.exe --sources C:*.cpp --export_type=html:coverage -- .\x64\Debug\SampleOrderSystem.exe
+```
+
+리포트는 `.\coverage\index.html`로 생성된다.
+
+### 커버리지 확인 절차
+
+1. 위 명령어로 커버리지 측정 실행
+2. `.\coverage\` 폴더의 HTML 리포트에서 각 파일별 라인 커버리지 확인
+3. 설계 문서의 TDD 테스트 케이스가 모두 커버됐는지 검토
+4. 커버되지 않은 주요 경로가 있으면 추가 테스트 케이스 작성 후 재측정
+5. 커버리지 요약을 보고에 포함
+
+### 보고 형식 (Phase 완료 시)
+
+```
+## 커버리지 요약
+
+| 파일 | 라인 커버리지 |
+|------|--------------|
+| Sample.hpp      | XX% |
+| OrderService.cpp| XX% |
+| ...             | ... |
+
+미커버 주요 경로: ...
+```
+
 ## 금지 사항
 
 - 테스트 없이 구현 코드를 먼저 작성하는 것
